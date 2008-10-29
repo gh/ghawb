@@ -196,64 +196,64 @@ Global commands
 
 Commands may be used anywhere in an awb source file, but the most common place to use them is in templates.  <? and ?> delimit awb commands (like php).  The following commands are available:
 
-<?insert title?>::
+insert title::
 	Inserts the title of the AsciiDoc source file that is being processed.
 
-<?insert content?>::
+insert content::
 	Inserts the content of the page.  The meaning of content depends on the template being used, but it follows common sense and really shouldn't be confusing.
 
-<?insert breadcrumbs?>::
+insert breadcrumbs::
 	Inserts a breadcrumb trail as a list, complete with links for previous directories up the hierarchy.
 
-<?insert name?>::
+insert name::
 	Inserts the directory name defined in awbdir.conf
 
-<?insert user option "option"?>::
+insert user option "option"::
 	Inserts a user-defined option (described later).  The double-quotes are required.
 
-<?insert page date "strftime format string"?>::
+insert page date "strftime format string"::
 	Inserts the date (file's mtime) of the page being processed.  If the format string is not specified, the default %A, %B %e, %Y (eg. Monday, January 1, 2008) is used.
 
 Blog Commands
 ~~~~~~~~~~~~~
   
-<?insert blog root?>::
+insert blog root::
 	Inserts the path from the website root directory to the blog root directory.
 
-<?insert blog recent?>::
+insert blog recent::
 	Inserts a list of the most recent blog posts.
 
-<?insert magazine recent?>::
+insert magazine recent::
 	Only for magazine-like blogs.  Inserts a list of recent editions of the magazine-like blog.
 
-<?insert magazine contents?>::
+insert magazine contents::
 	Only for magazine-like blogs.  Inserts a list of all posts belonging to the current magazine.
 
-<?insert magazine title?>::
+insert magazine title::
 	Only for magazine-like blogs.  Inserts the title of the current magazine.
 
-<?insert magazine date "strftime format string"?>::
+insert magazine date "strftime format string"::
 	Only for magazine-like blogs.  Inserts the date of the current magazine, or "News" if the post is later than the latest magazine contents post.  If the format string is not specified, the default %A, %B %e, %Y (eg. Monday, January 1, 2008) is used.
 
 Gallery Commands
 ~~~~~~~~~~~~~~~~
 
-<?insert room title?>
+insert room title::
 	Inserts the title of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.
 
-<?insert room intro?>
+insert room intro::
 	Inserts the intro of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.
 
-<?insert room filename?>
+insert room filename::
 	Inserts the filename (without the .gal.txt extension) of the room file.  This is useful when you want photos in subdirectories, rather than the same directory as the room file.
 
-<?insert photo filename?>
+insert photo filename::
 	Inserts the filename of the current photo (including the extension).
 
-<?insert photo title?>
+insert photo title::
 	Inserts the title of the photo.
 
-<?insert photo caption?>
+insert photo caption::
 	Inserts the caption of the photo.
 
 Ignoring Files

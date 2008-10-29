@@ -43,12 +43,17 @@ class awbsiteinfo(object):
 			siteroot = config.get(sitename, 'siteroot')
 			self.__asciidoc_options = config.getQuick(sitename, 'asciidoc options')
 			self.__baseurl = config.get(sitename, 'baseurl')
+			self.__tidy_html = False
+			if config.get(sitename, 'tidy'):
+				if config.get(sitename, 'tidy').strip() == 'true':
+					self.__tidy_html = True
 		else:
 			print "awb - asciidoc website builder.  Site not found.  usage: awb [-r] websitename"
 			sys.exit()
 		# Make this OS independent
 		if siteroot == '/':
 			print "Don't be ridiculous.  Build your site from /home or something."
+			sys.exit()
 		
 		self.__srcdir = os.path.join(siteroot, 'src')
 		self.__destdir = os.path.join(siteroot, 'html')
@@ -106,13 +111,20 @@ class awbsiteinfo(object):
 	def callAsciidoc(self, destfile, text):
 		# Make this OS-independent
 		tmpfile = os.path.join('/tmp', destfile.replace(os.sep, '_'))
+		tmpfile2 = os.path.join('/tmp', 'tidy_' + destfile.replace(os.sep, '_'))
 		writeFile(text, tmpfile)
 		try:
 			print INDENT + "Writing " + destfile
 			if not os.path.isdir(os.path.split(destfile)[0]):
 				os.makedirs(os.path.split(destfile)[0])
-			asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + destfile + ' ' + tmpfile
-			os.system(asciidoccmd)
+			if self.__tidy_html:
+				asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + tmpfile2 + ' ' + tmpfile
+			else:
+				asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + destfile + ' ' + tmpfile
+			if os.system(asciidoccmd) != 0:
+				print "AsciiDoc error.  awb will now quit."
+			if self.__tidy_html:
+				os.system('cat ' + tmpfile2 + ' | tidy -config ' + os.path.join(siteinfo.__srcdir, 'tidy-options') + ' -o ' + destfile)
 		except Exception, e:
 			print e
 			sys.exit()
@@ -183,8 +195,8 @@ class awbdir(object):
 			elif self.config['type'] == awbdir.dirtype_blog:
 				self.__files += self.__scan_blog(d)
 				for f in self.__files:
-					if not self.__stale:
-						if f.stale:
+					if f.stale:
+						if f.filetype == awbfile.filetype_process:
 							self.__stale = True
 
 	def process(self):
@@ -205,6 +217,10 @@ class awbdir(object):
 		print INDENT + "Leaving " + os.path.join(self.__abspath)
 
 	def __process_normal(self):
+		indexFound = False
+		indextxt = 'Contents of ' + self.config['name'] + '\n'
+		for i in range(len(indextxt)):
+			indextxt += '='
 		for f in self.__files:
 			if f.filetype == awbfile.filetype_copy:
 				if f.stale:
@@ -219,13 +235,23 @@ class awbdir(object):
 					siteinfo.callAsciidoc(f.destfile, text)
 				else:
 					print INDENT + f.filename + " is up to date."
+				if f.filename == 'index.txt':
+					indexFound = True
+				else:
+					indextxt += '\n* ' + f.linkto
+		if not indexFound:
+			index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
+			self.__files.append(index) # so it won't get deleted
+			if index.stale or self.__stale:
+				text = index.textbaked()
+				siteinfo.callAsciidoc(index.destfile, text)
 
 	def __process_blog(self):
 		blogposts = [f for f in self.__files if f.filetype == awbfile.filetype_process]
 		if len(blogposts) > 0:
 			blogposts.sort(self.__filesorter)
-			posts = [f for f in blogposts if f.filetype == awbfile.filetype_process and not f.magpost]
-			magazines = [f for f in blogposts if f.filetype == awbfile.filetype_process and f.magpost]
+			posts = [f for f in blogposts if not f.magpost]
+			magazines = [f for f in blogposts if f.magpost]
 			num_recent_posts = min(self.config['num recent posts'], len(posts)) 
 			num_recent_magazines = min(self.config['num recent posts'], len(magazines))
 		
@@ -647,8 +673,7 @@ class awbfile(object):
 		return self.__title
 
 	def __href(self):
-		href = self.__destfile.replace(siteinfo.destdir, '')
-		href = siteinfo.baseurl + href.replace(os.path.sep, '/')
+		href = self.__destfile.replace(siteinfo.destdir, '').replace(os.path.sep, '/')
 		return href
 
 	def __linkto(self):
