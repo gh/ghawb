@@ -1,0 +1,73 @@
+*-*-outline-*-
+title: AWB on Github
+
+* Setting up awb on github.com
+
+  - download cvs/*
+  - checkout ghawb from github
+  - create awb repo via:
+    ghawb/doc/import awb
+
+  - log in or create account
+  - 'Create new repository'
+  - follow instructions to import an existing repository
+
+* Notes to Jared
+
+You will have to create a new account.  You can upgrade it later so
+you might as well just start with a free one.
+
+When creating the new repository it says to fork an existing repository ... 
+but ignore them and create a new one.
+
+I already had the fun of creating a new one so I'm just going to follow the
+second set of instructions and 'push an existing one.  I've changed my
+global config (locally, not on github) to my brand new gmail account ... I
+wonder if that will break anything ... I'm not reading the gmail account yet
+though.  I want my gmail address to appear in the git log.
+
+The "home page" must be an existing url (with the 'http//' which I always
+forget).  But you already have one so that shouldn't be a problem.
+
+** import script
+
+* Github.
+
+** Login/Create account
+
+   http://github.com
+   click on appropriate link
+   [I saved everything I typed ... too many passwords]
+
+** Create new repository.
+
+   project name:	ghawb
+   description:		My Copy of Jared Henley's awb code.
+   home page:		http://ghtest.cotef.net
+   create project
+
+** Existing Git Repo
+
+I have:
+
+   ghawb/doc
+	Notes.eom	THIS FILE
+   cvs/
+	awb-0.1.1.tar.gz  awb-0.2.1.tar.bz2  awb-0.2.4.tar.bz2
+	awb-0.1.tar.gz    awb-0.2.2.tar.bz2  awb-0.2.tar.gz
+   awb/
+	s2t
+	t2s
+
+So I'm going to write a script:
+	doc/import
+and run it.
+
+Then I will:
+     cd ghawb
+     git remote add origin git@github.com:gh/ghawb.git
+     git push origin master
+And it should all be good.
+
+** import
+* EOF

@@ -1,0 +1,52 @@
+*-*-outline-*-
+title: AWB on Github
+:author: Guy W. Hulbert
+links: file/html
+
+** Note to Jared
+
+My 'eom' script reads takes any file in "emacs outline-mode" and if
+passed the argument 'ascii' converts it to asciidoc as follows.
+
+It uses the first top-level section header as a page title unless 
+it finds "title:" within it (see above).  It passes through asciidoc
+attribute settings (:X:) and follows internal directives (Y:) but
+ignores all other text and subsections.
+
+It converts all the section headings to asciidoc headings until it
+hits '* EOF' from at which point it stops translating to asciidoc.
+
+If emacs finds "-*-X-*-" in the first few (4, default) lines of a file
+it turns on X-mode if it exists.  On my workstation, I have a very
+old .emacs file which does some emacs customizations for me.  In
+particular it always puts FILE.eom into outline mode ... but I use
+these files on other systems where my .emacs file does not exist
+so I use the -*-outline-*- above to force it into outline mode.
+
+If you look at the file ../site/src/index.txt you will see what
+was done with this file.
+
+* What is AWB
+
+AWB is
+http://jared.henley.id.au/software/awb/[software]
+written and
+http://jared.henley.id.au/software/awb/documentation.html[documented]
+by Jared Henley.
+
+* What's This Then ?
+
+I found that AWB was just what I needed but I wanted to make some minor
+changes to it.  So I sent Jared an email and he was agreeable.  Unfortunately,
+he was using sourceforge and all the cool kids now are using git.  Also, I
+discovered that he had published 6 versions already but the link above
+goes to version 0.1 and the only source I could find which included all 6
+versions was on a source forge mirror.
+
+So I volunteered to help Jared put it up on github and here we are.
+
+Except you should be using Jared's version ADD LINK [here].
+
+file:Notes.html[Old notes]
+
+* EOF
