@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.2.3" />
+<meta name="generator" content="AsciiDoc 8.2.6" />
 <style type="text/css">
 /* Debug borders */
 p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
@@ -26,10 +26,12 @@ a:visited {
 
 em {
   font-style: italic;
+  color: navy;
 }
 
 strong {
   font-weight: bold;
+  color: #083194;
 }
 
 tt {
@@ -69,6 +71,10 @@ hr {
 p {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
 }
 
 pre {
@@ -123,6 +129,7 @@ div.content { /* Block element content. */
 
 /* Block element titles. */
 div.title, caption.title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   text-align: left;
@@ -202,16 +209,19 @@ dl {
 dt {
   margin-top: 0.5em;
   margin-bottom: 0;
-  font-style: italic;
+  font-style: normal;
 }
 dd > *:first-child {
-  margin-top: 0;
+  margin-top: 0.1em;
 }
 
 ul, ol {
     list-style-position: outside;
 }
-div.olist2 ol {
+div.olist > ol {
+  list-style-type: decimal;
+}
+div.olist2 > ol {
   list-style-type: lower-alpha;
 }
 
@@ -231,11 +241,11 @@ div.hlist {
   margin-bottom: 0.8em;
 }
 div.hlist td {
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 }
 td.hlist1 {
   vertical-align: top;
-  font-style: italic;
+  font-style: normal;
   padding-right: 0.8em;
 }
 td.hlist2 {
@@ -279,6 +289,7 @@ div.sidebar-content {
   padding: 0.5em;
 }
 div.sidebar-title, div.image-title {
+  color: #527bbd;
   font-family: sans-serif;
   font-weight: bold;
   margin-top: 0.0em;
@@ -302,6 +313,14 @@ div.exampleblock-content {
 
 /* IE6 sets dynamically generated links as visited. */
 div#toc a:visited { color: blue; }
+
+/* Because IE6 child selector is broken. */
+div.olist2 ol {
+  list-style-type: lower-alpha;
+}
+div.olist2 div.olist ol {
+  list-style-type: decimal;
+}
 </style>
 <title>AsciiDoc Website Builder</title>
 </head>
@@ -352,7 +371,8 @@ All the yummy features of AsciiDoc
 <pre><tt>[mywebsite]
 siteroot: /home/me/mywebsite
 baseurl: http://my.web.site
-asciidoc options: -d book -b html4</tt></pre>
+asciidoc options: -d book -b html4
+tidy: true</tt></pre>
 </div></div>
 <div class="para"><p>This simply defines a website known to awb as "mywebsite".  The options are:</p></div>
 <div class="vlist"><dl>
@@ -378,6 +398,14 @@ asciidoc options
 <dd>
 <p>
         Options to be passed to AsciiDoc.  I use this to specify a custom html4.conf file in addition to the options shown in the example.
+</p>
+</dd>
+<dt>
+tidy
+</dt>
+<dd>
+<p>
+        true/false &#8212; whether to use HTML tidy on the output.  If this is set true, you must also have a tidy-options in <tt>siteroot/src</tt>.  See <a href="http://tidy.sourceforge.net/docs/quickref.html">http://tidy.sourceforge.net/docs/quickref.html</a> for details of what to put in this file.
 </p>
 </dd>
 </dl></div>
@@ -443,6 +471,7 @@ num recent posts
 <div class="sectionbody">
 <h3 id="_normal">Normal</h3><div style="clear:left"></div>
 <div class="para"><p>In a normal directory, all files ending in &#8220;.txt&#8221; have the template and subtemplate applied, and are then converted via AsciiDoc into HTML files.</p></div>
+<div class="para"><p>If there is no index.txt file in the directory, one will be created, listing the subdirectories and documents in the directory (in alphabetical order according to title, directories first).</p></div>
 <h3 id="_blog">Blog</h3><div style="clear:left"></div>
 <div class="para"><p>awb's blog framework is quite flexible, although for obvious reasons it can't support reader comments.  All you really need to do is to create your blog posts, one per file, using a logical naming structure.  The index.html file (showing your most recent posts) and contents.html (listing the titles of all posts, with headings each month) are automatically generated for you.</p></div>
 <div class="para"><p>awb uses the path of a post to determine its date.  All the path separators are stripped out, leaving a string of digits which are interpreted as follows:</p></div>
@@ -546,7 +575,7 @@ in a gallery.</tt></pre>
 <div class="para"><p>Commands may be used anywhere in an awb source file, but the most common place to use them is in templates.  &lt;? and ?&gt; delimit awb commands (like php).  The following commands are available:</p></div>
 <div class="vlist"><dl>
 <dt>
-&lt;?insert title?&gt;
+insert title
 </dt>
 <dd>
 <p>
@@ -554,7 +583,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert content?&gt;
+insert content
 </dt>
 <dd>
 <p>
@@ -562,7 +591,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert breadcrumbs?&gt;
+insert breadcrumbs
 </dt>
 <dd>
 <p>
@@ -570,7 +599,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert name?&gt;
+insert name
 </dt>
 <dd>
 <p>
@@ -578,7 +607,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert user option "option"?&gt;
+insert user option "option"
 </dt>
 <dd>
 <p>
@@ -586,7 +615,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert page date "strftime format string"?&gt;
+insert page date "strftime format string"
 </dt>
 <dd>
 <p>
@@ -597,7 +626,7 @@ in a gallery.</tt></pre>
 <h3 id="_blog_commands">Blog Commands</h3><div style="clear:left"></div>
 <div class="vlist"><dl>
 <dt>
-&lt;?insert blog root?&gt;
+insert blog root
 </dt>
 <dd>
 <p>
@@ -605,7 +634,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert blog recent?&gt;
+insert blog recent
 </dt>
 <dd>
 <p>
@@ -613,7 +642,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert magazine recent?&gt;
+insert magazine recent
 </dt>
 <dd>
 <p>
@@ -621,7 +650,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert magazine contents?&gt;
+insert magazine contents
 </dt>
 <dd>
 <p>
@@ -629,7 +658,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert magazine title?&gt;
+insert magazine title
 </dt>
 <dd>
 <p>
@@ -637,7 +666,7 @@ in a gallery.</tt></pre>
 </p>
 </dd>
 <dt>
-&lt;?insert magazine date "strftime format string"?&gt;
+insert magazine date "strftime format string"
 </dt>
 <dd>
 <p>
@@ -646,18 +675,56 @@ in a gallery.</tt></pre>
 </dd>
 </dl></div>
 <h3 id="_gallery_commands">Gallery Commands</h3><div style="clear:left"></div>
-<div class="para"><p>&lt;?insert room title?&gt;
-        Inserts the title of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.</p></div>
-<div class="para"><p>&lt;?insert room intro?&gt;
-        Inserts the intro of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.</p></div>
-<div class="para"><p>&lt;?insert room filename?&gt;
-        Inserts the filename (without the .gal.txt extension) of the room file.  This is useful when you want photos in subdirectories, rather than the same directory as the room file.</p></div>
-<div class="para"><p>&lt;?insert photo filename?&gt;
-        Inserts the filename of the current photo (including the extension).</p></div>
-<div class="para"><p>&lt;?insert photo title?&gt;
-        Inserts the title of the photo.</p></div>
-<div class="para"><p>&lt;?insert photo caption?&gt;
-        Inserts the caption of the photo.</p></div>
+<div class="vlist"><dl>
+<dt>
+insert room title
+</dt>
+<dd>
+<p>
+        Inserts the title of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.
+</p>
+</dd>
+<dt>
+insert room intro
+</dt>
+<dd>
+<p>
+        Inserts the intro of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.
+</p>
+</dd>
+<dt>
+insert room filename
+</dt>
+<dd>
+<p>
+        Inserts the filename (without the .gal.txt extension) of the room file.  This is useful when you want photos in subdirectories, rather than the same directory as the room file.
+</p>
+</dd>
+<dt>
+insert photo filename
+</dt>
+<dd>
+<p>
+        Inserts the filename of the current photo (including the extension).
+</p>
+</dd>
+<dt>
+insert photo title
+</dt>
+<dd>
+<p>
+        Inserts the title of the photo.
+</p>
+</dd>
+<dt>
+insert photo caption
+</dt>
+<dd>
+<p>
+        Inserts the caption of the photo.
+</p>
+</dd>
+</dl></div>
 </div>
 <h2 id="_ignoring_files">Ignoring Files</h2>
 <div class="sectionbody">
@@ -669,7 +736,7 @@ in a gallery.</tt></pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2007-12-11 20:55:46 EST
+Last updated 2008-05-13 17:54:40 EST
 </div>
 </div>
 </body>

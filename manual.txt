@@ -22,6 +22,7 @@ To start using awb you need to set up at least one website in your user awb conf
 siteroot: /home/me/mywebsite
 baseurl: http://my.web.site
 asciidoc options: -d book -b html4
+tidy: true
 ----
 
 This simply defines a website known to awb as "mywebsite".  The options are:
@@ -34,6 +35,9 @@ baseurl::
 
 asciidoc options::
 	Options to be passed to AsciiDoc.  I use this to specify a custom html4.conf file in addition to the options shown in the example.
+
+tidy::
+	true/false -- whether to use HTML tidy on the output.  If this is set true, you must also have a tidy-options in +siteroot/src+.  See http://tidy.sourceforge.net/docs/quickref.html[] for details of what to put in this file.
 
 Once you have a website configured and some source files written, simply issue the command
 
@@ -88,6 +92,8 @@ Normal
 ~~~~~~
 
 In a normal directory, all files ending in ``.txt'' have the template and subtemplate applied, and are then converted via AsciiDoc into HTML files.
+
+If there is no index.txt file in the directory, one will be created, listing the subdirectories and documents in the directory (in alphabetical order according to title, directories first).
 
 Blog
 ~~~~

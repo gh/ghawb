@@ -44,9 +44,8 @@ class awbsiteinfo(object):
 			self.__asciidoc_options = config.getQuick(sitename, 'asciidoc options')
 			self.__baseurl = config.get(sitename, 'baseurl')
 			self.__tidy_html = False
-			if config.get(sitename, 'tidy'):
-				if config.get(sitename, 'tidy').strip() == 'true':
-					self.__tidy_html = True
+			if config.getQuick(sitename, 'tidy', 'false').strip().lower() == 'true':
+				self.__tidy_html = True
 		else:
 			print "awb - asciidoc website builder.  Site not found.  usage: awb [-r] websitename"
 			sys.exit()
@@ -181,6 +180,7 @@ class awbdir(object):
 		siteinfo.writeCache(self.__relpath, cacheData)
 		
 		contents = os.listdir(self.__abspath)
+		contents.sort()
 		self.__files = []
 		self.__subdirs = []
 		for f in [f for f in contents if os.path.isfile(os.path.join(self.__abspath, f))]:
@@ -221,6 +221,9 @@ class awbdir(object):
 		indextxt = 'Contents of ' + self.config['name'] + '\n'
 		for i in range(len(indextxt)):
 			indextxt += '='
+		indextxt += '\n'
+		for d in self.__subdirs:
+			indextxt += '\n* link:/' + d.path + '[' + d.name + ']'
 		for f in self.__files:
 			if f.filetype == awbfile.filetype_copy:
 				if f.stale:
@@ -239,6 +242,7 @@ class awbdir(object):
 					indexFound = True
 				else:
 					indextxt += '\n* ' + f.linkto
+
 		if not indexFound:
 			index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
 			self.__files.append(index) # so it won't get deleted
@@ -477,6 +481,9 @@ class awbdir(object):
 	def __get_path(self):
 		return self.__relpath
 
+	def __get_name(self):
+		return self.config['name']
+
 	def __get_dirtype(self):
 		return self.config['type']
 	
@@ -484,6 +491,7 @@ class awbdir(object):
 		return self.__stale
 	
 	path = property(__get_path)
+	name = property(__get_name)
 	dirtype = property(__get_dirtype)
 	dirtype_normal = 'normal'
 	dirtype_blog = 'blog'
@@ -952,5 +960,6 @@ if __name__ == "__main__":
 	website.delete_extra_files()
 	siteinfo.saveCache()
 	sitemap_xml = website.sitemap
+	print "Generating sitemap.xml"
 	writeFile(sitemap_xml, os.path.join(siteinfo.destdir, 'sitemap.xml'))
 
