@@ -439,7 +439,7 @@ class awbdir(object):
 		for f in self.__files:
 			if f.filetype == awbfile.filetype_process:
 				sitemaptxt += '	<url>\n'
-				sitemaptxt += '		<loc>' + f.href + '</loc>\n'
+				sitemaptxt += '		<loc>' + siteinfo.baseurl + f.href + '</loc>\n'
 				sitemaptxt += '		<lastmod>' + f.lastmod + '</lastmod>\n'
 				sitemaptxt += '	</url>\n'
 		for d in self.__subdirs:
