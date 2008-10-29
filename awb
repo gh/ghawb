@@ -53,13 +53,15 @@ class awbsiteinfo(object):
 		self.__srcdir = os.path.join(siteroot, 'src')
 		self.__destdir = os.path.join(siteroot, 'html')
 		if not os.path.isdir(siteroot):
-			raise Exception
+			print "Site root " + siteroot + " is not a directory."
+			sys.exit()
 		if not os.path.isdir(self.__srcdir):
-			raise Exception
+			print "Site source " + self.__srcdir + " is not a directory."
+			sys.exit()
 		
 		self.__ignore = [CONFIG_FILE, TEMPLATE_FILE]
 		ignorefile = os.path.join(self.__srcdir, '.ignore')
-		ignoretext = readFile(ignorefile).strip()
+		ignoretext = readFile(ignorefile)
 		if ignoretext:
 			ignore = re.split('[\n,\r]{1,2}', ignoretext)
 			self.__ignore += ignore
