@@ -26,6 +26,10 @@ import shutil
 import fnmatch
 import cPickle
 
+USAGE="""awb - asciidoc website builder.
+usage: awb [-r] websitename
+       awb -l"""
+DNAME='.asciidoc'
 CONFIG_FILE = 'awbdir.conf'
 TEMPLATE_FILE = 'template.conf'
 BUILD_ALL = False
@@ -34,7 +38,7 @@ INDENT = ''
 class awbsiteinfo(object):
     def __init__(self, sitename):
         # Read the user's websites def. file (~/.awb/sites.conf)
-        configfile = os.path.join(os.path.expanduser('~'), '.awb', 'awb.conf')
+        configfile = os.path.join(os.path.expanduser('~'), DNAME, 'awb.conf')
         config = ConfigParser.RawConfigParser()
         config.read(os.path.join(configfile))
         if sitename in config.sections():
@@ -43,8 +47,17 @@ class awbsiteinfo(object):
             self.__baseurl = config.get(sitename, 'baseurl')
             self.__tidy_html = config.getQuick(sitename, 'tidy', 'false').strip().lower() == 'true'
             self.__index_link_local = config.getQuick(sitename, 'index link local', 'false').strip().lower() == 'true'
+        elif sitename == 'ALL':
+            for s in config.sections():
+                try:
+                    d = config.get(s,'description')
+                except:
+                    d = 'No Description'
+                print s,"\t",d
+            sys.exit()
         else:
-            print "awb - asciidoc website builder.  Site not found.  usage: awb [-r] websitename"
+            print "Site not found."
+            print USAGE
             sys.exit()
         # FIXME Make this OS independent
         if siteroot == '/':
@@ -73,8 +86,8 @@ class awbsiteinfo(object):
             self.__copytxt += re.split('[\n,\r]{1,2}', copytxttext)
 
     def restoreCache(self):
-        if os.path.isfile(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache')):
-            fh = open(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache'), 'rb')
+        if os.path.isfile(os.path.join(os.path.expanduser('~'), DNAME, sitename + '.cache')):
+            fh = open(os.path.join(os.path.expanduser('~'), DNAME, sitename + '.cache'), 'rb')
             try:
                 self.__oldcache = cPickle.Unpickler(fh).load()
             except Exception:
@@ -86,7 +99,7 @@ class awbsiteinfo(object):
         self.__newcache = None
 
     def saveCache(self):
-        fh = open(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache'), 'wb')
+        fh = open(os.path.join(os.path.expanduser('~'), DNAME, sitename + '.cache'), 'wb')
         pickler = cPickle.Pickler(fh, -1)
         pickler.dump(self.__newcache)
         fh.close()
@@ -124,7 +137,8 @@ class awbsiteinfo(object):
         except Exception, e:
             print e
             sys.exit()
-        finally:
+        else:
+        #finally:
             rm(tmpfile)
             rm(tmpfile2)
 
@@ -591,7 +605,8 @@ class awbfile(object):
             except Exception, e:
                 print "awb: non-fatal: Error reading the title from " + self.__srcfile + ".  " + str(e)
                 self.__title = ''
-            finally:
+            else:
+            #finally:
                 fh.close()
 
     def __init_copy(self):
@@ -1003,15 +1018,17 @@ def fnmatchin(name, patterns):
 if __name__ == "__main__":
     # Parse the commandline
     if len(sys.argv) == 2 or len(sys.argv) == 3:
+        if sys.argv[1] == '-l':
+            awbsiteinfo('ALL')
         sitename = sys.argv[len(sys.argv)-1]
         if len(sys.argv) == 3:
             if sys.argv[1] == '-r':
                 BUILD_ALL = True
             else:
-                print "awb - asciidoc website builder.  usage: awb [-r] websitename"
+                print USAGE
                 sys.exit()
     else:
-        print "awb - asciidoc website builder.  usage: awb [-r] websitename"
+        print USAGE
         sys.exit()
     siteinfo = awbsiteinfo(sitename)
     siteinfo.restoreCache()
