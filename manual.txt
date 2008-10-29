@@ -1,0 +1,272 @@
+AsciiDoc Website Builder
+========================
+
+AsciiDoc Website Builder (awb) is a python program that allows you to write a website in almost plain text (ie AsciiDoc), plus a few simple configuration files.  It exists to solve my problem of never updating my own website (which used a lot of PHP) because I couldn't quickly remember offhand all the changes and specific formatting I needed to add new pages.
+
+Features
+--------
+
+* Flexible template system
+* Blog generation
+* Image gallery generation
+* sitemap.xml generation
+* All the yummy features of AsciiDoc
+
+Getting started
+---------------
+
+To start using awb you need to set up at least one website in your user awb configuration file.  This is located at ~/.awb/awb.conf  It could look something like this:
+
+----
+[mywebsite]
+siteroot: /home/me/mywebsite
+baseurl: http://my.web.site
+asciidoc options: -d book -b html4
+----
+
+This simply defines a website known to awb as "mywebsite".  The options are:
+
+siteroot::
+	The root directory of the awb website.  The AsciiDoc source lives in +siteroot/src+, and the html output goes to +siteroot/html+.
+
+baseurl::
+	The url of the root of the website.  This is used for generating sitemap.xml.
+
+asciidoc options::
+	Options to be passed to AsciiDoc.  I use this to specify a custom html4.conf file in addition to the options shown in the example.
+
+Once you have a website configured and some source files written, simply issue the command
+
+----
+% awb mywebsite
+----
+
+awb will only regenerate HTML files that have become out of date.  If this doesn't work for some reason, the option -r can be used to fix it.
+
+----
+% awb -r mywebsite
+----
+
+This can be done from anywhere in the filesystem.  awb knows from its configuration file where to read from and write to.
+
+awbdir.conf
+-----------
+
+Each directory in the source tree may contain a configuration file named awbdir.conf.  This file specifies directory-specific options to be used by awb.
+
+[dir setup] section
+~~~~~~~~~~~~~~~~~~~
+
+type::
+	can be one of 'normal', 'blog', or 'gallery'.  'normal' is the default.  The meaning of the types is explained below.
+
+name::
+	A descriptive name of the directory, as shown in the breadcrumb trail.
+
+awbdir.conf [blog] section
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section defines settings used if the directory type is blog.
+
+num main posts::
+	The number of posts to show on the index.html page of the blog.
+
+num recent posts::
+	The number of post titles to show in the "recent posts" list, and also the number of magazine titles to show in the "recent magazines" list.
+
+[user] section
+~~~~~~~~~~~~~~
+
+Here you can define any option you like.  It can be referred to in the template.  This is useful when you want to use the same template across the site, but change small parts of it (eg. an image).
+
+awbdir.conf options cascade from a directory to its children.  This is quite convenient, as child directories need only override the parent options that do not apply.  The only exception is the directory name, which does not cascade.
+
+Directory Types
+---------------
+
+Normal
+~~~~~~
+
+In a normal directory, all files ending in ``.txt'' have the template and subtemplate applied, and are then converted via AsciiDoc into HTML files.
+
+Blog
+~~~~
+
+awb's blog framework is quite flexible, although for obvious reasons it can't support reader comments.  All you really need to do is to create your blog posts, one per file, using a logical naming structure.  The index.html file (showing your most recent posts) and contents.html (listing the titles of all posts, with headings each month) are automatically generated for you.
+
+awb uses the path of a post to determine its date.  All the path separators are stripped out, leaving a string of digits which are interpreted as follows:
+
+* 8 digits: yyyymmdd
+* 10 digits: yyyymmddhh
+* 12 digits: yyyymmddhhmm
+
+The following paths all produce valid dates.
+
+----
+2007/10/12/13/15.txt
+2007/10/121315.txt
+2007/1012/1315.txt
+200710121315.txt
+----
+
+This system leaves you with a lot of flexibility as to how deeply you want your directories nested.
+
+The first line of the post file is taken as the title of the post.  This title is used in the recent posts list and in contents.html.  This is consistent with the AsciiDoc markup that you would normally use.
+
+In addition to this standard blog format, awb also supports a magazine-like blog formatting feature.  In this model, a collection of posts belong to a magazine, which has its own "table of contents" post which can be used to summarise and/or introduce the other posts.  In addition, a magazine-like blog generates two extra insertables.  A magazine-like blog also generates a magazine-contents.html file which contains a list of all magazines.
+
+You define a magazine-like blog simply by including a post with a .mag.txt extension.  Each .mag.txt file is a magazine "table of contents".  All posts earlier than a .mag.txt post (and later than the previous .mag.txt post) belong to that magazine.  Posts later than the latest .mag.txt belong to a virtual magazine entitled "News".
+
+Gallery
+~~~~~~~
+
+When a directory is specified as a gallery, files with the extension .gal.txt are treated specially.  Each .gal.txt file is a room in the gallery, and is formatted as shown in the following example:
+
+----
+[room]
+title: The title of the room.
+intro: Some text introducing the room.
+
+[filename.jpg]
+title: The title of the photo.
+caption: A caption for the photo.
+----
+
+The title, intro and caption values are optional, but if you don't use them, don't include them in your templates either.
+
+Templates
+---------
+
+Each directory in the source tree may contain a configuration file named template.conf.  This file contains the page templates to be used by awb.  If a template is not specified, very basic defaults are provided.
+
+Here is an example of template.conf:
+
+----
+[main template]
+This template is the first you would
+typically define.
+
+Typically you would put here some
+stuff that you want to insert before
+the main text of your page, like a
+navigation bar.
+	
+Then you insert the page content
+like this:
+	
+<?insert content?>
+	
+Then you can write your footer.
+
+[sub template]
+This template replaces
+<?insert content?> from the main
+template.  Use this when you need to
+add a little content to each page,
+but not override the inherited
+main template.
+
+[post template]
+When you write a blog, this
+template is applied to each
+blog post.  It replaces
+<?insert content?>
+
+[room template]
+This template is used a lot like
+a sub template for a gallery room.
+
+[room photo template]
+This template is applied to each
+photo in a gallery room.
+
+[photo template]
+This template is a lot like a sub
+template for each large-sized photo
+in a gallery.
+----
+
+awb templates are cascading.   This allows templates to be defined once in the root of the website, and applied everywhere.  The only exception to this is the sub template, which does not cascade.
+
+awb Commands
+------------
+
+Global commands
+~~~~~~~~~~~~~~~
+
+Commands may be used anywhere in an awb source file, but the most common place to use them is in templates.  <? and ?> delimit awb commands (like php).  The following commands are available:
+
+<?insert title?>::
+	Inserts the title of the AsciiDoc source file that is being processed.
+
+<?insert content?>::
+	Inserts the content of the page.  The meaning of content depends on the template being used, but it follows common sense and really shouldn't be confusing.
+
+<?insert breadcrumbs?>::
+	Inserts a breadcrumb trail as a list, complete with links for previous directories up the hierarchy.
+
+<?insert name?>::
+	Inserts the directory name defined in awbdir.conf
+
+<?insert user option "option"?>::
+	Inserts a user-defined option (described later).  The double-quotes are required.
+
+<?insert page date "strftime format string"?>::
+	Inserts the date (file's mtime) of the page being processed.  If the format string is not specified, the default %A, %B %e, %Y (eg. Monday, January 1, 2008) is used.
+
+Blog Commands
+~~~~~~~~~~~~~
+  
+<?insert blog root?>::
+	Inserts the path from the website root directory to the blog root directory.
+
+<?insert blog recent?>::
+	Inserts a list of the most recent blog posts.
+
+<?insert magazine recent?>::
+	Only for magazine-like blogs.  Inserts a list of recent editions of the magazine-like blog.
+
+<?insert magazine contents?>::
+	Only for magazine-like blogs.  Inserts a list of all posts belonging to the current magazine.
+
+<?insert magazine title?>::
+	Only for magazine-like blogs.  Inserts the title of the current magazine.
+
+<?insert magazine date "strftime format string"?>::
+	Only for magazine-like blogs.  Inserts the date of the current magazine, or "News" if the post is later than the latest magazine contents post.  If the format string is not specified, the default %A, %B %e, %Y (eg. Monday, January 1, 2008) is used.
+
+Gallery Commands
+~~~~~~~~~~~~~~~~
+
+<?insert room title?>
+	Inserts the title of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.
+
+<?insert room intro?>
+	Inserts the intro of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.
+
+<?insert room filename?>
+	Inserts the filename (without the .gal.txt extension) of the room file.  This is useful when you want photos in subdirectories, rather than the same directory as the room file.
+
+<?insert photo filename?>
+	Inserts the filename of the current photo (including the extension).
+
+<?insert photo title?>
+	Inserts the title of the photo.
+
+<?insert photo caption?>
+	Inserts the caption of the photo.
+
+Ignoring Files
+--------------
+
+You may have files in your source directory that aren't supposed to go onto the website.  Or you may have a text file (like Yahoo's verification file) that shouldn't get turned into HTML.  You can tell awb to ignore these files using two special files in the root of your website source.
+
+.ignore
+~~~~~~~
+
+Files listed here are totally ignored by awb.  This file is simply a list of filenames on new lines.  The filename can use the unix glob syntax (* and friends).
+
+.copytxt
+~~~~~~~~
+
+Files listed here are copied straight to the HTML output directory.  As with the ignore list, this is a list of filenames on new lines, and uses the glob syntax.

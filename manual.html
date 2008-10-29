@@ -1,0 +1,676 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.2.3" />
+<style type="text/css">
+/* Debug borders */
+p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
+/*
+  border: 1px solid red;
+*/
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+}
+
+strong {
+  font-weight: bold;
+}
+
+tt {
+  color: navy;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  font-family: sans-serif;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+
+div.sectionbody {
+  font-family: serif;
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+pre {
+  padding: 0;
+  margin: 0;
+}
+
+span#author {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+span#email {
+}
+span#revision {
+  font-family: sans-serif;
+}
+
+div#footer {
+  font-family: sans-serif;
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+div#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+div#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+div#preamble,
+div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-right: 10%;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.5em;
+  margin-bottom: 2.5em;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+
+div.listingblock {
+  margin-right: 0%;
+}
+div.listingblock > div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock > div.content {
+  padding-left: 2.0em;
+}
+
+div.attribution {
+  text-align: right;
+}
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 2px solid silver;
+}
+
+div.exampleblock > div.content {
+  border-left: 2px solid silver;
+  padding: 0.5em;
+}
+
+div.verseblock div.content {
+  white-space: pre;
+}
+
+div.imageblock div.content { padding-left: 0; }
+div.imageblock img { border: 1px solid silver; }
+span.image img { border-style: none; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: italic;
+}
+dd > *:first-child {
+  margin-top: 0;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+div.olist2 ol {
+  list-style-type: lower-alpha;
+}
+
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead {
+  font-family: sans-serif;
+  font-weight: bold;
+}
+tfoot {
+  font-weight: bold;
+}
+
+div.hlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hlist td {
+  padding-bottom: 5px;
+}
+td.hlist1 {
+  vertical-align: top;
+  font-style: italic;
+  padding-right: 0.8em;
+}
+td.hlist2 {
+  vertical-align: top;
+}
+
+@media print {
+  div#footer-badges { display: none; }
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+/* Workarounds for IE6's broken and incomplete CSS2. */
+
+div.sidebar-content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+div.sidebar-title, div.image-title {
+  font-family: sans-serif;
+  font-weight: bold;
+  margin-top: 0.0em;
+  margin-bottom: 0.5em;
+}
+
+div.listingblock div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock-content {
+  padding-left: 2.0em;
+}
+
+div.exampleblock-content {
+  border-left: 2px solid silver;
+  padding-left: 0.5em;
+}
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
+</style>
+<title>AsciiDoc Website Builder</title>
+</head>
+<body>
+<div id="header">
+<h1>AsciiDoc Website Builder</h1>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="para"><p>AsciiDoc Website Builder (awb) is a python program that allows you to write a website in almost plain text (ie AsciiDoc), plus a few simple configuration files.  It exists to solve my problem of never updating my own website (which used a lot of PHP) because I couldn't quickly remember offhand all the changes and specific formatting I needed to add new pages.</p></div>
+</div>
+</div>
+<h2 id="_features">Features</h2>
+<div class="sectionbody">
+<div class="ilist"><ul>
+<li>
+<p>
+Flexible template system
+</p>
+</li>
+<li>
+<p>
+Blog generation
+</p>
+</li>
+<li>
+<p>
+Image gallery generation
+</p>
+</li>
+<li>
+<p>
+sitemap.xml generation
+</p>
+</li>
+<li>
+<p>
+All the yummy features of AsciiDoc
+</p>
+</li>
+</ul></div>
+</div>
+<h2 id="_getting_started">Getting started</h2>
+<div class="sectionbody">
+<div class="para"><p>To start using awb you need to set up at least one website in your user awb configuration file.  This is located at ~/.awb/awb.conf  It could look something like this:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[mywebsite]
+siteroot: /home/me/mywebsite
+baseurl: http://my.web.site
+asciidoc options: -d book -b html4</tt></pre>
+</div></div>
+<div class="para"><p>This simply defines a website known to awb as "mywebsite".  The options are:</p></div>
+<div class="vlist"><dl>
+<dt>
+siteroot
+</dt>
+<dd>
+<p>
+        The root directory of the awb website.  The AsciiDoc source lives in <tt>siteroot/src</tt>, and the html output goes to <tt>siteroot/html</tt>.
+</p>
+</dd>
+<dt>
+baseurl
+</dt>
+<dd>
+<p>
+        The url of the root of the website.  This is used for generating sitemap.xml.
+</p>
+</dd>
+<dt>
+asciidoc options
+</dt>
+<dd>
+<p>
+        Options to be passed to AsciiDoc.  I use this to specify a custom html4.conf file in addition to the options shown in the example.
+</p>
+</dd>
+</dl></div>
+<div class="para"><p>Once you have a website configured and some source files written, simply issue the command</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>% awb mywebsite</tt></pre>
+</div></div>
+<div class="para"><p>awb will only regenerate HTML files that have become out of date.  If this doesn't work for some reason, the option -r can be used to fix it.</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>% awb -r mywebsite</tt></pre>
+</div></div>
+<div class="para"><p>This can be done from anywhere in the filesystem.  awb knows from its configuration file where to read from and write to.</p></div>
+</div>
+<h2 id="_awbdir_conf">awbdir.conf</h2>
+<div class="sectionbody">
+<div class="para"><p>Each directory in the source tree may contain a configuration file named awbdir.conf.  This file specifies directory-specific options to be used by awb.</p></div>
+<h3 id="_dir_setup_section">[dir setup] section</h3><div style="clear:left"></div>
+<div class="vlist"><dl>
+<dt>
+type
+</dt>
+<dd>
+<p>
+        can be one of <em>normal</em>, <em>blog</em>, or <em>gallery</em>.  <em>normal</em> is the default.  The meaning of the types is explained below.
+</p>
+</dd>
+<dt>
+name
+</dt>
+<dd>
+<p>
+        A descriptive name of the directory, as shown in the breadcrumb trail.
+</p>
+</dd>
+</dl></div>
+<h3 id="_awbdir_conf_blog_section">awbdir.conf [blog] section</h3><div style="clear:left"></div>
+<div class="para"><p>This section defines settings used if the directory type is blog.</p></div>
+<div class="vlist"><dl>
+<dt>
+num main posts
+</dt>
+<dd>
+<p>
+        The number of posts to show on the index.html page of the blog.
+</p>
+</dd>
+<dt>
+num recent posts
+</dt>
+<dd>
+<p>
+        The number of post titles to show in the "recent posts" list, and also the number of magazine titles to show in the "recent magazines" list.
+</p>
+</dd>
+</dl></div>
+<h3 id="_user_section">[user] section</h3><div style="clear:left"></div>
+<div class="para"><p>Here you can define any option you like.  It can be referred to in the template.  This is useful when you want to use the same template across the site, but change small parts of it (eg. an image).</p></div>
+<div class="para"><p>awbdir.conf options cascade from a directory to its children.  This is quite convenient, as child directories need only override the parent options that do not apply.  The only exception is the directory name, which does not cascade.</p></div>
+</div>
+<h2 id="_directory_types">Directory Types</h2>
+<div class="sectionbody">
+<h3 id="_normal">Normal</h3><div style="clear:left"></div>
+<div class="para"><p>In a normal directory, all files ending in &#8220;.txt&#8221; have the template and subtemplate applied, and are then converted via AsciiDoc into HTML files.</p></div>
+<h3 id="_blog">Blog</h3><div style="clear:left"></div>
+<div class="para"><p>awb's blog framework is quite flexible, although for obvious reasons it can't support reader comments.  All you really need to do is to create your blog posts, one per file, using a logical naming structure.  The index.html file (showing your most recent posts) and contents.html (listing the titles of all posts, with headings each month) are automatically generated for you.</p></div>
+<div class="para"><p>awb uses the path of a post to determine its date.  All the path separators are stripped out, leaving a string of digits which are interpreted as follows:</p></div>
+<div class="ilist"><ul>
+<li>
+<p>
+8 digits: yyyymmdd
+</p>
+</li>
+<li>
+<p>
+10 digits: yyyymmddhh
+</p>
+</li>
+<li>
+<p>
+12 digits: yyyymmddhhmm
+</p>
+</li>
+</ul></div>
+<div class="para"><p>The following paths all produce valid dates.</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>2007/10/12/13/15.txt
+2007/10/121315.txt
+2007/1012/1315.txt
+200710121315.txt</tt></pre>
+</div></div>
+<div class="para"><p>This system leaves you with a lot of flexibility as to how deeply you want your directories nested.</p></div>
+<div class="para"><p>The first line of the post file is taken as the title of the post.  This title is used in the recent posts list and in contents.html.  This is consistent with the AsciiDoc markup that you would normally use.</p></div>
+<div class="para"><p>In addition to this standard blog format, awb also supports a magazine-like blog formatting feature.  In this model, a collection of posts belong to a magazine, which has its own "table of contents" post which can be used to summarise and/or introduce the other posts.  In addition, a magazine-like blog generates two extra insertables.  A magazine-like blog also generates a magazine-contents.html file which contains a list of all magazines.</p></div>
+<div class="para"><p>You define a magazine-like blog simply by including a post with a .mag.txt extension.  Each .mag.txt file is a magazine "table of contents".  All posts earlier than a .mag.txt post (and later than the previous .mag.txt post) belong to that magazine.  Posts later than the latest .mag.txt belong to a virtual magazine entitled "News".</p></div>
+<h3 id="_gallery">Gallery</h3><div style="clear:left"></div>
+<div class="para"><p>When a directory is specified as a gallery, files with the extension .gal.txt are treated specially.  Each .gal.txt file is a room in the gallery, and is formatted as shown in the following example:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[room]
+title: The title of the room.
+intro: Some text introducing the room.
+
+[filename.jpg]
+title: The title of the photo.
+caption: A caption for the photo.</tt></pre>
+</div></div>
+<div class="para"><p>The title, intro and caption values are optional, but if you don't use them, don't include them in your templates either.</p></div>
+</div>
+<h2 id="_templates">Templates</h2>
+<div class="sectionbody">
+<div class="para"><p>Each directory in the source tree may contain a configuration file named template.conf.  This file contains the page templates to be used by awb.  If a template is not specified, very basic defaults are provided.</p></div>
+<div class="para"><p>Here is an example of template.conf:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>[main template]
+This template is the first you would
+typically define.
+
+Typically you would put here some
+stuff that you want to insert before
+the main text of your page, like a
+navigation bar.
+
+Then you insert the page content
+like this:
+
+&lt;?insert content?&gt;
+
+Then you can write your footer.
+
+[sub template]
+This template replaces
+&lt;?insert content?&gt; from the main
+template.  Use this when you need to
+add a little content to each page,
+but not override the inherited
+main template.
+
+[post template]
+When you write a blog, this
+template is applied to each
+blog post.  It replaces
+&lt;?insert content?&gt;
+
+[room template]
+This template is used a lot like
+a sub template for a gallery room.
+
+[room photo template]
+This template is applied to each
+photo in a gallery room.
+
+[photo template]
+This template is a lot like a sub
+template for each large-sized photo
+in a gallery.</tt></pre>
+</div></div>
+<div class="para"><p>awb templates are cascading.   This allows templates to be defined once in the root of the website, and applied everywhere.  The only exception to this is the sub template, which does not cascade.</p></div>
+</div>
+<h2 id="_awb_commands">awb Commands</h2>
+<div class="sectionbody">
+<h3 id="_global_commands">Global commands</h3><div style="clear:left"></div>
+<div class="para"><p>Commands may be used anywhere in an awb source file, but the most common place to use them is in templates.  &lt;? and ?&gt; delimit awb commands (like php).  The following commands are available:</p></div>
+<div class="vlist"><dl>
+<dt>
+&lt;?insert title?&gt;
+</dt>
+<dd>
+<p>
+        Inserts the title of the AsciiDoc source file that is being processed.
+</p>
+</dd>
+<dt>
+&lt;?insert content?&gt;
+</dt>
+<dd>
+<p>
+        Inserts the content of the page.  The meaning of content depends on the template being used, but it follows common sense and really shouldn't be confusing.
+</p>
+</dd>
+<dt>
+&lt;?insert breadcrumbs?&gt;
+</dt>
+<dd>
+<p>
+        Inserts a breadcrumb trail as a list, complete with links for previous directories up the hierarchy.
+</p>
+</dd>
+<dt>
+&lt;?insert name?&gt;
+</dt>
+<dd>
+<p>
+        Inserts the directory name defined in awbdir.conf
+</p>
+</dd>
+<dt>
+&lt;?insert user option "option"?&gt;
+</dt>
+<dd>
+<p>
+        Inserts a user-defined option (described later).  The double-quotes are required.
+</p>
+</dd>
+<dt>
+&lt;?insert page date "strftime format string"?&gt;
+</dt>
+<dd>
+<p>
+        Inserts the date (file's mtime) of the page being processed.  If the format string is not specified, the default %A, %B %e, %Y (eg. Monday, January 1, 2008) is used.
+</p>
+</dd>
+</dl></div>
+<h3 id="_blog_commands">Blog Commands</h3><div style="clear:left"></div>
+<div class="vlist"><dl>
+<dt>
+&lt;?insert blog root?&gt;
+</dt>
+<dd>
+<p>
+        Inserts the path from the website root directory to the blog root directory.
+</p>
+</dd>
+<dt>
+&lt;?insert blog recent?&gt;
+</dt>
+<dd>
+<p>
+        Inserts a list of the most recent blog posts.
+</p>
+</dd>
+<dt>
+&lt;?insert magazine recent?&gt;
+</dt>
+<dd>
+<p>
+        Only for magazine-like blogs.  Inserts a list of recent editions of the magazine-like blog.
+</p>
+</dd>
+<dt>
+&lt;?insert magazine contents?&gt;
+</dt>
+<dd>
+<p>
+        Only for magazine-like blogs.  Inserts a list of all posts belonging to the current magazine.
+</p>
+</dd>
+<dt>
+&lt;?insert magazine title?&gt;
+</dt>
+<dd>
+<p>
+        Only for magazine-like blogs.  Inserts the title of the current magazine.
+</p>
+</dd>
+<dt>
+&lt;?insert magazine date "strftime format string"?&gt;
+</dt>
+<dd>
+<p>
+        Only for magazine-like blogs.  Inserts the date of the current magazine, or "News" if the post is later than the latest magazine contents post.  If the format string is not specified, the default %A, %B %e, %Y (eg. Monday, January 1, 2008) is used.
+</p>
+</dd>
+</dl></div>
+<h3 id="_gallery_commands">Gallery Commands</h3><div style="clear:left"></div>
+<div class="para"><p>&lt;?insert room title?&gt;
+        Inserts the title of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.</p></div>
+<div class="para"><p>&lt;?insert room intro?&gt;
+        Inserts the intro of the gallery room, as defined in the .gal.txt file.  Only applies to the room page, not to the individual photo pages.</p></div>
+<div class="para"><p>&lt;?insert room filename?&gt;
+        Inserts the filename (without the .gal.txt extension) of the room file.  This is useful when you want photos in subdirectories, rather than the same directory as the room file.</p></div>
+<div class="para"><p>&lt;?insert photo filename?&gt;
+        Inserts the filename of the current photo (including the extension).</p></div>
+<div class="para"><p>&lt;?insert photo title?&gt;
+        Inserts the title of the photo.</p></div>
+<div class="para"><p>&lt;?insert photo caption?&gt;
+        Inserts the caption of the photo.</p></div>
+</div>
+<h2 id="_ignoring_files">Ignoring Files</h2>
+<div class="sectionbody">
+<div class="para"><p>You may have files in your source directory that aren't supposed to go onto the website.  Or you may have a text file (like Yahoo's verification file) that shouldn't get turned into HTML.  You can tell awb to ignore these files using two special files in the root of your website source.</p></div>
+<h3 id="_ignore">.ignore</h3><div style="clear:left"></div>
+<div class="para"><p>Files listed here are totally ignored by awb.  This file is simply a list of filenames on new lines.  The filename can use the unix glob syntax (* and friends).</p></div>
+<h3 id="_copytxt">.copytxt</h3><div style="clear:left"></div>
+<div class="para"><p>Files listed here are copied straight to the HTML output directory.  As with the ignore list, this is a list of filenames on new lines, and uses the glob syntax.</p></div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2007-12-11 20:55:46 EST
+</div>
+</div>
+</body>
+</html>
