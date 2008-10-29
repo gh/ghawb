@@ -32,994 +32,994 @@ BUILD_ALL = False
 INDENT = ''
 
 class awbsiteinfo(object):
-	def __init__(self, sitename):
-		# Read the user's websites def. file (~/.awb/sites.conf)
-		configfile = os.path.join(os.path.expanduser('~'), '.awb', 'awb.conf')
-		config = ConfigParser.RawConfigParser()
-		config.read(os.path.join(configfile))
-		if sitename in config.sections():
-			siteroot = config.get(sitename, 'siteroot')
-			self.__asciidoc_options = config.getQuick(sitename, 'asciidoc options')
-			self.__baseurl = config.get(sitename, 'baseurl')
-			self.__tidy_html = config.getQuick(sitename, 'tidy', 'false').strip().lower() == 'true'
-			self.__index_link_local = config.getQuick(sitename, 'index link local', 'false').strip().lower() == 'true'
-		else:
-			print "awb - asciidoc website builder.  Site not found.  usage: awb [-r] websitename"
-			sys.exit()
-		# FIXME Make this OS independent
-		if siteroot == '/':
-			print "Don't be ridiculous.  Build your site from /home or something."
-			sys.exit()
+    def __init__(self, sitename):
+        # Read the user's websites def. file (~/.awb/sites.conf)
+        configfile = os.path.join(os.path.expanduser('~'), '.awb', 'awb.conf')
+        config = ConfigParser.RawConfigParser()
+        config.read(os.path.join(configfile))
+        if sitename in config.sections():
+            siteroot = config.get(sitename, 'siteroot')
+            self.__asciidoc_options = config.getQuick(sitename, 'asciidoc options')
+            self.__baseurl = config.get(sitename, 'baseurl')
+            self.__tidy_html = config.getQuick(sitename, 'tidy', 'false').strip().lower() == 'true'
+            self.__index_link_local = config.getQuick(sitename, 'index link local', 'false').strip().lower() == 'true'
+        else:
+            print "awb - asciidoc website builder.  Site not found.  usage: awb [-r] websitename"
+            sys.exit()
+        # FIXME Make this OS independent
+        if siteroot == '/':
+            print "Don't be ridiculous.  Build your site from /home or something."
+            sys.exit()
 			
-		# Check for existence of directories
-		self.__srcdir = os.path.join(siteroot, 'src')
-		self.__destdir = os.path.join(siteroot, 'html')
-		if not os.path.isdir(siteroot):
-			print "Site root " + siteroot + " is not a directory."
-			sys.exit()
-		if not os.path.isdir(self.__srcdir):
-			print "Site source " + self.__srcdir + " is not a directory."
-			sys.exit()
+        # Check for existence of directories
+        self.__srcdir = os.path.join(siteroot, 'src')
+        self.__destdir = os.path.join(siteroot, 'html')
+        if not os.path.isdir(siteroot):
+            print "Site root " + siteroot + " is not a directory."
+            sys.exit()
+        if not os.path.isdir(self.__srcdir):
+            print "Site source " + self.__srcdir + " is not a directory."
+            sys.exit()
 		
-		# Read in ignore file
-		self.__ignore = [CONFIG_FILE, TEMPLATE_FILE]
-		ignoretext = readFile(os.path.join(self.__srcdir, '.ignore'))
-		if ignoretext:
-			self.__ignore += re.split('[\n,\r]{1,2}', ignoretext)
-		# Read in copytxt file
-		self.__copytxt = []
-		copytxttext = readFile(os.path.join(self.__srcdir, '.copytxt'))
-		if copytxttext:
-			self.__copytxt += re.split('[\n,\r]{1,2}', copytxttext)
+        # Read in ignore file
+        self.__ignore = [CONFIG_FILE, TEMPLATE_FILE]
+        ignoretext = readFile(os.path.join(self.__srcdir, '.ignore'))
+        if ignoretext:
+            self.__ignore += re.split('[\n,\r]{1,2}', ignoretext)
+        # Read in copytxt file
+        self.__copytxt = []
+        copytxttext = readFile(os.path.join(self.__srcdir, '.copytxt'))
+        if copytxttext:
+            self.__copytxt += re.split('[\n,\r]{1,2}', copytxttext)
 
-	def restoreCache(self):
-		if os.path.isfile(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache')):
-			fh = open(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache'), 'rb')
-			try:
-				self.__oldcache = cPickle.Unpickler(fh).load()
-			except Exception:
-				self.__oldcache = None
-			fh.close()
-		else:
-			self.__oldcache = None
+    def restoreCache(self):
+        if os.path.isfile(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache')):
+            fh = open(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache'), 'rb')
+            try:
+                self.__oldcache = cPickle.Unpickler(fh).load()
+            except Exception:
+                self.__oldcache = None
+            fh.close()
+        else:
+            self.__oldcache = None
 		
-		self.__newcache = None
+        self.__newcache = None
 
-	def saveCache(self):
-		fh = open(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache'), 'wb')
-		pickler = cPickle.Pickler(fh, -1)
-		pickler.dump(self.__newcache)
-		fh.close()
+    def saveCache(self):
+        fh = open(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache'), 'wb')
+        pickler = cPickle.Pickler(fh, -1)
+        pickler.dump(self.__newcache)
+        fh.close()
 		
-	def readCache(self, key):
-		if self.__oldcache:
-			if key in self.__oldcache.keys():
-				return self.__oldcache[key]
-		return None
+    def readCache(self, key):
+        if self.__oldcache:
+            if key in self.__oldcache.keys():
+                return self.__oldcache[key]
+        return None
 	
-	def writeCache(self, key, value):
-		if not self.__newcache:
-			self.__newcache = {}
-		self.__newcache[key] = value
+    def writeCache(self, key, value):
+        if not self.__newcache:
+            self.__newcache = {}
+        self.__newcache[key] = value
 
-	def callAsciidoc(self, destfile, text):
-		# Make this OS-independent
-		tmpfile = os.path.join('/tmp', destfile.replace(os.sep, '_') + '.txt')
-		tmpfile2 = os.path.join('/tmp', 'tidy' + destfile.replace(os.sep, '_'))
-		writeFile(text, tmpfile)
-		try:
-			print INDENT + "Writing " + destfile
-			if not os.path.isdir(os.path.split(destfile)[0]):
-				os.makedirs(os.path.split(destfile)[0])
-			asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + tmpfile2 + ' ' + tmpfile
-			if os.system(asciidoccmd) != 0:
-				print "AsciiDoc error.  awb will now exit."
-				exit()
-			if self.__tidy_html:
-				tidycmd = 'cat ' + tmpfile2 + ' | tidy -config ' + os.path.join(siteinfo.__srcdir, 'tidy-options') + ' -o ' + destfile
-				if os.system(tidycmd) != 0:
-					print "HTML Tidy error.  awb will now exit."
-			else:
-				os.system('mv ' + tmpfile2 + ' ' + destfile)
-		except Exception, e:
-			print e
-			sys.exit()
-		finally:
-			rm(tmpfile)
-			rm(tmpfile2)
+    def callAsciidoc(self, destfile, text):
+        # Make this OS-independent
+        tmpfile = os.path.join('/tmp', destfile.replace(os.sep, '_') + '.txt')
+        tmpfile2 = os.path.join('/tmp', 'tidy' + destfile.replace(os.sep, '_'))
+        writeFile(text, tmpfile)
+        try:
+            print INDENT + "Writing " + destfile
+            if not os.path.isdir(os.path.split(destfile)[0]):
+                os.makedirs(os.path.split(destfile)[0])
+            asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + tmpfile2 + ' ' + tmpfile
+            if os.system(asciidoccmd) != 0:
+                print "AsciiDoc error.  awb will now exit."
+                exit()
+            if self.__tidy_html:
+                tidycmd = 'cat ' + tmpfile2 + ' | tidy -config ' + os.path.join(siteinfo.__srcdir, 'tidy-options') + ' -o ' + destfile
+                if os.system(tidycmd) != 0:
+                    print "HTML Tidy error.  awb will now exit."
+            else:
+                os.system('mv ' + tmpfile2 + ' ' + destfile)
+        except Exception, e:
+            print e
+            sys.exit()
+        finally:
+            rm(tmpfile)
+            rm(tmpfile2)
 
-	def ignore(self, filename):
-		return fnmatchin(filename, self.__ignore)
+    def ignore(self, filename):
+        return fnmatchin(filename, self.__ignore)
 	
-	def copytxt(self, filename):
-		return fnmatchin(filename, self.__copytxt)
+    def copytxt(self, filename):
+        return fnmatchin(filename, self.__copytxt)
 
-	def __get_srcdir(self):
-		return self.__srcdir
+    def __get_srcdir(self):
+        return self.__srcdir
 
-	def __get_destdir(self):
-		return self.__destdir
+    def __get_destdir(self):
+        return self.__destdir
 	
-	def __get_baseurl(self):
-		return self.__baseurl
+    def __get_baseurl(self):
+        return self.__baseurl
 
-	def __get_index_link_local(self):
-		return self.__index_link_local
+    def __get_index_link_local(self):
+        return self.__index_link_local
 
-	srcdir = property(__get_srcdir)
-	destdir = property(__get_destdir)
-	baseurl = property(__get_baseurl)
-	index_link_local = property(__get_index_link_local)
+    srcdir = property(__get_srcdir)
+    destdir = property(__get_destdir)
+    baseurl = property(__get_baseurl)
+    index_link_local = property(__get_index_link_local)
 
 class awbdir(object):
-	def __init__(self, directory, parent=None):
-		self.__fsname = os.path.split(directory)[1]
-		if directory == '': # directory is the root for the website
-			self.__relpath = directory
-			parentconfig = None
-		else:
-			self.__relpath = os.path.join(parent.path, directory)
-			parentconfig = parent.config
-		self.__abspath = os.path.join(siteinfo.srcdir, self.__relpath)
-		self.config = awbdirconfig(self.__relpath, parentconfig)
+    def __init__(self, directory, parent=None):
+        self.__fsname = os.path.split(directory)[1]
+        if directory == '': # directory is the root for the website
+            self.__relpath = directory
+            parentconfig = None
+        else:
+            self.__relpath = os.path.join(parent.path, directory)
+            parentconfig = parent.config
+        self.__abspath = os.path.join(siteinfo.srcdir, self.__relpath)
+        self.config = awbdirconfig(self.__relpath, parentconfig)
 		
-		cacheData = siteinfo.readCache(self.__relpath)
-		if not cacheData:
-			self.__stale = self.config.config_mtime or self.config.template_mtime
-		else:
-			self.__stale = self.config.config_mtime > cacheData[0] or self.config.template_mtime > cacheData[1]
-		if parent: # parent overrides anything above
-			if parent.stale:
-				self.__stale = True
-		if BUILD_ALL: # build all overrides anything above
-			self.__stale = True
-		cacheData = (self.config.config_mtime, self.config.template_mtime)
-		siteinfo.writeCache(self.__relpath, cacheData)
+        cacheData = siteinfo.readCache(self.__relpath)
+        if not cacheData:
+            self.__stale = self.config.config_mtime or self.config.template_mtime
+        else:
+            self.__stale = self.config.config_mtime > cacheData[0] or self.config.template_mtime > cacheData[1]
+        if parent: # parent overrides anything above
+            if parent.stale:
+                self.__stale = True
+        if BUILD_ALL: # build all overrides anything above
+            self.__stale = True
+        cacheData = (self.config.config_mtime, self.config.template_mtime)
+        siteinfo.writeCache(self.__relpath, cacheData)
 		
-		contents = os.listdir(self.__abspath)
-		contents.sort()
-		self.__files = []
-		self.__subdirs = []
-		for f in [f for f in contents if os.path.isfile(os.path.join(self.__abspath, f))]:
-			fileinfo = awbfile(f, self)
-			if fileinfo.filetype != awbfile.filetype_ignore:
-				self.__files.append(awbfile(f, self))
-		for d in [d for d in contents if os.path.isdir(os.path.join(self.__abspath, d)) and not siteinfo.ignore(d)]:
-			if self.config['type'] == awbdir.dirtype_normal:
-				self.__subdirs.append(awbdir(d, self))
-			elif self.config['type'] == awbdir.dirtype_gallery:
-				self.__subdirs.append(awbdir(d, self))
-			elif self.config['type'] == awbdir.dirtype_blog:
-				self.__files += self.__scan_blog(d)
+        contents = os.listdir(self.__abspath)
+        contents.sort()
+        self.__files = []
+        self.__subdirs = []
+        for f in [f for f in contents if os.path.isfile(os.path.join(self.__abspath, f))]:
+            fileinfo = awbfile(f, self)
+            if fileinfo.filetype != awbfile.filetype_ignore:
+                self.__files.append(awbfile(f, self))
+        for d in [d for d in contents if os.path.isdir(os.path.join(self.__abspath, d)) and not siteinfo.ignore(d)]:
+            if self.config['type'] == awbdir.dirtype_normal:
+                self.__subdirs.append(awbdir(d, self))
+            elif self.config['type'] == awbdir.dirtype_gallery:
+                self.__subdirs.append(awbdir(d, self))
+            elif self.config['type'] == awbdir.dirtype_blog:
+                self.__files += self.__scan_blog(d)
 
-	def process(self):
-		global INDENT
-		print INDENT + "Entering " + os.path.join(self.__abspath)
-		tmp = INDENT
-		INDENT = tmp + '   '
-		for d in self.__subdirs:
-			d.process()
+    def process(self):
+        global INDENT
+        print INDENT + "Entering " + os.path.join(self.__abspath)
+        tmp = INDENT
+        INDENT = tmp + '   '
+        for d in self.__subdirs:
+            d.process()
 
-		if self.config['type'] == awbdir.dirtype_normal:
-			self.__process_normal()
-		elif self.config['type'] == awbdir.dirtype_blog:
-			self.__process_blog()
-		elif self.config['type'] == awbdir.dirtype_gallery:
-			self.__process_gallery()
-		INDENT = tmp
-		print INDENT + "Leaving " + os.path.join(self.__abspath)
+        if self.config['type'] == awbdir.dirtype_normal:
+            self.__process_normal()
+        elif self.config['type'] == awbdir.dirtype_blog:
+            self.__process_blog()
+        elif self.config['type'] == awbdir.dirtype_gallery:
+            self.__process_gallery()
+        INDENT = tmp
+        print INDENT + "Leaving " + os.path.join(self.__abspath)
 
-	def __process_normal(self):
-		indexFound = False
-		indextxt = 'Contents of ' + self.config['name'] + '\n'
-		for i in range(len(indextxt)):
-			indextxt += '='
-		indextxt += '\n'
-		for d in self.__subdirs:
-			if d.has_content:
-				if siteinfo.index_link_local:
-					indextxt += '\n* link:' + d.fsname + '[' + d.name + ']'
-				else:
-					indextxt += '\n* link:/' + d.path + '[' + d.name + ']'
-		for f in self.__files:
-			if f.filetype == awbfile.filetype_copy:
-				if f.stale:
-					print INDENT + "Copying " + f.filename
-					copyFile(f.srcfile, f.destfile)
-				else:
-					print INDENT + f.filename + " is up to date."
-			elif f.filetype == awbfile.filetype_process:
-				if f.stale or self.__stale:
-					print INDENT + "Processing file " + f.filename
-					text = f.textbaked()
-					siteinfo.callAsciidoc(f.destfile, text)
-				else:
-					print INDENT + f.filename + " is up to date."
-				if f.filename == 'index.txt':
-					indexFound = True
-				else:
-					if siteinfo.index_link_local:
-						indextxt += '\n* ' + f.linklocal
-					else:
-						indextxt += '\n* ' + f.linkto
+    def __process_normal(self):
+        indexFound = False
+        indextxt = 'Contents of ' + self.config['name'] + '\n'
+        for i in range(len(indextxt)):
+            indextxt += '='
+        indextxt += '\n'
+        for d in self.__subdirs:
+            if d.has_content:
+                if siteinfo.index_link_local:
+                    indextxt += '\n* link:' + d.fsname + '[' + d.name + ']'
+                else:
+                    indextxt += '\n* link:/' + d.path + '[' + d.name + ']'
+        for f in self.__files:
+            if f.filetype == awbfile.filetype_copy:
+                if f.stale:
+                    print INDENT + "Copying " + f.filename
+                    copyFile(f.srcfile, f.destfile)
+                else:
+                    print INDENT + f.filename + " is up to date."
+            elif f.filetype == awbfile.filetype_process:
+                if f.stale or self.__stale:
+                    print INDENT + "Processing file " + f.filename
+                    text = f.textbaked()
+                    siteinfo.callAsciidoc(f.destfile, text)
+                else:
+                    print INDENT + f.filename + " is up to date."
+                if f.filename == 'index.txt':
+                    indexFound = True
+                else:
+                    if siteinfo.index_link_local:
+                        indextxt += '\n* ' + f.linklocal
+                    else:
+                        indextxt += '\n* ' + f.linkto
 
-		if not indexFound:
-			if self.has_content:
-				index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
-				self.__files.append(index) # so it won't get deleted
-				if index.stale or self.__stale:
-					text = index.textbaked()
-					siteinfo.callAsciidoc(index.destfile, text)
+        if not indexFound:
+            if self.has_content:
+                index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
+                self.__files.append(index) # so it won't get deleted
+                if index.stale or self.__stale:
+                    text = index.textbaked()
+                    siteinfo.callAsciidoc(index.destfile, text)
 
-	def __process_blog(self):
-		blogposts = [f for f in self.__files if f.filetype == awbfile.filetype_process]
-		if len(blogposts) > 0:
-			blogposts.sort(self.__filesorter)
-			posts = [f for f in blogposts if not f.magpost]
-			magazines = [f for f in blogposts if f.magpost]
-			num_recent_posts = min(self.config['num recent posts'], len(posts)) 
-			num_recent_magazines = min(self.config['num recent posts'], len(magazines))
+    def __process_blog(self):
+        blogposts = [f for f in self.__files if f.filetype == awbfile.filetype_process]
+        if len(blogposts) > 0:
+            blogposts.sort(self.__filesorter)
+            posts = [f for f in blogposts if not f.magpost]
+            magazines = [f for f in blogposts if f.magpost]
+            num_recent_posts = min(self.config['num recent posts'], len(posts)) 
+            num_recent_magazines = min(self.config['num recent posts'], len(magazines))
 		
-			template_text = self.config['main template'] + self.config['sub template'] + self.config['post template']
-			using_blog_recent = re.search(r'<\?\s*insert\s+blog\s+recent\s*\?>', template_text) != None
-			using_mag_recent = re.search(r'<\?\s*insert\s+magazine\s+recent\s*\?>', template_text) != None
-			using_mag_contents = re.search(r'<\?\s*insert\s+magazine\s+contents\s*\?>', template_text) != None
+            template_text = self.config['main template'] + self.config['sub template'] + self.config['post template']
+            using_blog_recent = re.search(r'<\?\s*insert\s+blog\s+recent\s*\?>', template_text) != None
+            using_mag_recent = re.search(r'<\?\s*insert\s+magazine\s+recent\s*\?>', template_text) != None
+            using_mag_contents = re.search(r'<\?\s*insert\s+magazine\s+contents\s*\?>', template_text) != None
 			
-			# Generate insertable data for blog pages
-			magcontents = self.__magcontents(blogposts)
-			mag_contents_stale = False
-			extra = {}
-			extra['recent posts'] = ''
-			extra['recent magazines'] = ''
-			extra['magazine contents'] = ''
-			extra['magazine date'] = ''			
-			extra['magazine title'] = ''
-			for p in posts[0:num_recent_posts]:
-				extra['recent posts'] += '\n* ' + p.linkto
-			for p in magazines[0:num_recent_magazines]:
-				extra['recent magazines'] += '\n* ' + p.linkto
-			currentpost = blogposts[0]
-			if currentpost.magpost:
-				extra['magazine contents'] = magcontents[currentpost.date]
-				extra['magazine date'] = currentpost.date
-				extra['magazine title'] = currentpost.title
-			else:
-				if magcontents.has_key('News'):
-					extra['magazine contents'] = magcontents['News']
-					if type(siteinfo.readCache(self.__relpath + ' magazine contents')) == dict:
-						mag_contents_stale = extra['magazine contents'] != siteinfo.readCache(self.__relpath + ' magazine contents')['News']
-				else:
-					extra['magazine contents'] = ''
-				extra['magazine date'] = None
-				extra['magazine title'] = 'News'
+            # Generate insertable data for blog pages
+            magcontents = self.__magcontents(blogposts)
+            mag_contents_stale = False
+            extra = {}
+            extra['recent posts'] = ''
+            extra['recent magazines'] = ''
+            extra['magazine contents'] = ''
+            extra['magazine date'] = ''			
+            extra['magazine title'] = ''
+            for p in posts[0:num_recent_posts]:
+                extra['recent posts'] += '\n* ' + p.linkto
+            for p in magazines[0:num_recent_magazines]:
+                extra['recent magazines'] += '\n* ' + p.linkto
+            currentpost = blogposts[0]
+            if currentpost.magpost:
+                extra['magazine contents'] = magcontents[currentpost.date]
+                extra['magazine date'] = currentpost.date
+                extra['magazine title'] = currentpost.title
+            else:
+                if magcontents.has_key('News'):
+                    extra['magazine contents'] = magcontents['News']
+                    if type(siteinfo.readCache(self.__relpath + ' magazine contents')) == dict:
+                        mag_contents_stale = extra['magazine contents'] != siteinfo.readCache(self.__relpath + ' magazine contents')['News']
+                else:
+                    extra['magazine contents'] = ''
+                extra['magazine date'] = None
+                extra['magazine title'] = 'News'
 
-			# Generate index
-			indextxt = ''
-			regen_index = False
-			for p in blogposts[0:num_recent_posts]:
-				indextxt += p.texthalfbaked(extra)
-				if p.stale:
-					regen_index = True
-			index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
-			self.__files.append(index)
-			if index.stale or self.__stale or regen_index:
-				text = index.textbaked(extra)
-				siteinfo.callAsciidoc(index.destfile, text)
+            # Generate index
+            indextxt = ''
+            regen_index = False
+            for p in blogposts[0:num_recent_posts]:
+                indextxt += p.texthalfbaked(extra)
+                if p.stale:
+                    regen_index = True
+            index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
+            self.__files.append(index)
+            if index.stale or self.__stale or regen_index:
+                text = index.textbaked(extra)
+                siteinfo.callAsciidoc(index.destfile, text)
 
-			# Generate contents
-			month = None
-			contentstxt = 'Contents of ' + self.config['name'] + '\n'
-			regen_contents = False
-			for i in range(len(contentstxt)):
-				contentstxt += '='
-			for p in blogposts:
-				if p.date.month != month:
-					contentstxt += "\n== " + p.date.strftime("%B %Y") + " ==\n\n"
-					month = p.date.month
-				contentstxt += '* ' + p.linkto + "\n"
-				if p.stale:
-					regen_contents = True
-			contents = awbfile('contents.txt', self, contentstxt, os.path.getmtime(self.__abspath))
-			self.__files.append(contents)
-			if contents.stale or self.__stale or regen_contents:
-				text = contents.textbaked(extra)
-				siteinfo.callAsciidoc(contents.destfile, text)
+            # Generate contents
+            month = None
+            contentstxt = 'Contents of ' + self.config['name'] + '\n'
+            regen_contents = False
+            for i in range(len(contentstxt)):
+                contentstxt += '='
+            for p in blogposts:
+                if p.date.month != month:
+                    contentstxt += "\n== " + p.date.strftime("%B %Y") + " ==\n\n"
+                    month = p.date.month
+                contentstxt += '* ' + p.linkto + "\n"
+                if p.stale:
+                    regen_contents = True
+            contents = awbfile('contents.txt', self, contentstxt, os.path.getmtime(self.__abspath))
+            self.__files.append(contents)
+            if contents.stale or self.__stale or regen_contents:
+                text = contents.textbaked(extra)
+                siteinfo.callAsciidoc(contents.destfile, text)
 			
-			blog_recent_stale = extra['recent posts'] != siteinfo.readCache(self.__relpath + ' recent posts')
-			mag_recent_stale = extra['recent magazines'] != siteinfo.readCache(self.__relpath + ' recent magazines')
+            blog_recent_stale = extra['recent posts'] != siteinfo.readCache(self.__relpath + ' recent posts')
+            mag_recent_stale = extra['recent magazines'] != siteinfo.readCache(self.__relpath + ' recent magazines')
 
-			# Process all blog entries
-			for f in blogposts:
-				print INDENT + "Processing blog file " + f.filename
-				if f.magpost:
-					extra['magazine contents'] = magcontents[f.date]
-					extra['magazine date'] = f.date
-					mag_contents_stale = False
-					if type(siteinfo.readCache(self.__relpath + ' magazine contents')) == dict:
-						mag_contents_stale = extra['magazine contents'] != siteinfo.readCache(self.__relpath + ' magazine contents')[f.date]
-				if f.stale or self.__stale \
-					or (using_blog_recent and blog_recent_stale) \
-					or (using_mag_recent and mag_recent_stale) \
-					or (using_mag_contents and mag_contents_stale):
-					text = f.textbaked(extra)
-					siteinfo.callAsciidoc(f.destfile, text)
+            # Process all blog entries
+            for f in blogposts:
+                print INDENT + "Processing blog file " + f.filename
+                if f.magpost:
+                    extra['magazine contents'] = magcontents[f.date]
+                    extra['magazine date'] = f.date
+                    mag_contents_stale = False
+                    if type(siteinfo.readCache(self.__relpath + ' magazine contents')) == dict:
+                        mag_contents_stale = extra['magazine contents'] != siteinfo.readCache(self.__relpath + ' magazine contents')[f.date]
+                if f.stale or self.__stale \
+                    or (using_blog_recent and blog_recent_stale) \
+                    or (using_mag_recent and mag_recent_stale) \
+                    or (using_mag_contents and mag_contents_stale):
+                    text = f.textbaked(extra)
+                    siteinfo.callAsciidoc(f.destfile, text)
 
-		# Process other files
-		for f in self.__files:
-			if f.filetype == awbfile.filetype_copy:
-				if f.stale:
-					print INDENT + "Copying " + f.filename
-					copyFile(f.srcfile, f.destfile)
-				else:
-					print INDENT + f.filename + " is up to date."
-		# Cache info for staleness checking
-		siteinfo.writeCache(self.__relpath + ' recent posts', extra['recent posts'])
-		siteinfo.writeCache(self.__relpath + ' recent magazines', extra['recent magazines'])
-		siteinfo.writeCache(self.__relpath + ' magazine contents', magcontents)
+        # Process other files
+        for f in self.__files:
+            if f.filetype == awbfile.filetype_copy:
+                if f.stale:
+                    print INDENT + "Copying " + f.filename
+                    copyFile(f.srcfile, f.destfile)
+                else:
+                    print INDENT + f.filename + " is up to date."
+        # Cache info for staleness checking
+        siteinfo.writeCache(self.__relpath + ' recent posts', extra['recent posts'])
+        siteinfo.writeCache(self.__relpath + ' recent magazines', extra['recent magazines'])
+        siteinfo.writeCache(self.__relpath + ' magazine contents', magcontents)
 
-	def __magcontents(self, blogposts):
-		allcontents = {}
-		contents = []
-		prevdate = None
-		for f in blogposts:
-			if f.magpost:
-				contentstr = ''
-				for c in contents:
-					contentstr += '\n* ' + c.linkto
-				if prevdate == None:
-					allcontents['News'] = contentstr
-				else:
-					allcontents[prevdate] = contentstr
-				prevdate = f.date
-				contents = []
-			else:
-				contents.append(f)
-		contentstr = ''
-		for c in contents:
-			contentstr += '\n* ' + c.linkto
-		allcontents[prevdate] = contentstr
-		return allcontents
+    def __magcontents(self, blogposts):
+        allcontents = {}
+        contents = []
+        prevdate = None
+        for f in blogposts:
+            if f.magpost:
+                contentstr = ''
+                for c in contents:
+                    contentstr += '\n* ' + c.linkto
+                if prevdate == None:
+                    allcontents['News'] = contentstr
+                else:
+                    allcontents[prevdate] = contentstr
+                prevdate = f.date
+                contents = []
+            else:
+                contents.append(f)
+        contentstr = ''
+        for c in contents:
+            contentstr += '\n* ' + c.linkto
+        allcontents[prevdate] = contentstr
+        return allcontents
 
-	def __process_gallery(self):
-		print INDENT + "Entering gallery " + self.__abspath
-		for f in self.__files:
-			if f.filetype == awbfile.filetype_process and f.galleryroom:
-				print INDENT + "Processing room " + f.filename
-				self.__process_gallery_room(f)
-				self.__files.remove(f)
+    def __process_gallery(self):
+        print INDENT + "Entering gallery " + self.__abspath
+        for f in self.__files:
+            if f.filetype == awbfile.filetype_process and f.galleryroom:
+                print INDENT + "Processing room " + f.filename
+                self.__process_gallery_room(f)
+                self.__files.remove(f)
 	
-		for f in self.__files:
-			if f.filetype == awbfile.filetype_copy:
-				if f.stale:
-					print INDENT + "Copying " + f.filename
-					copyFile(f.srcfile, f.destfile)
-				else:
-					print INDENT + f.filename + " is up to date."
-			elif f.filetype == awbfile.filetype_process and not f.galleryroom:
-				if f.stale or self.__stale:
-					if f.filename:
-						print INDENT + "Processing file " + f.filename
-					else:
-						print INDENT + "Creating " + f.destfile
-					text = f.textbaked()
-					siteinfo.callAsciidoc(f.destfile, text)					
-				else:
-					print INDENT + f.filename + " is up to date."
+        for f in self.__files:
+            if f.filetype == awbfile.filetype_copy:
+                if f.stale:
+                    print INDENT + "Copying " + f.filename
+                    copyFile(f.srcfile, f.destfile)
+                else:
+                    print INDENT + f.filename + " is up to date."
+            elif f.filetype == awbfile.filetype_process and not f.galleryroom:
+                if f.stale or self.__stale:
+                    if f.filename:
+                        print INDENT + "Processing file " + f.filename
+                    else:
+                        print INDENT + "Creating " + f.destfile
+                    text = f.textbaked()
+                    siteinfo.callAsciidoc(f.destfile, text)					
+                else:
+                    print INDENT + f.filename + " is up to date."
 
-	def __process_gallery_room(self, room_file):
-		room = roomFile(os.path.join(self.__abspath, room_file.filename))
-		room_filename_base = os.path.splitext(os.path.splitext(room_file.filename)[0])[0]
+    def __process_gallery_room(self, room_file):
+        room = roomFile(os.path.join(self.__abspath, room_file.filename))
+        room_filename_base = os.path.splitext(os.path.splitext(room_file.filename)[0])[0]
 
-		# Get templates
-		phototemplate = self.config['photo template']
-		roomphototemplate = self.config['room photo template']
-		roomtemplate = self.config['room template']
-		# Substitute room commands
-		roomtemplate = re.sub(r'<\?\s*insert\s+room\s+title\s*\?>', room.title, roomtemplate)
-		roomtemplate = re.sub(r'<\?\s*insert\s+room\s+intro\s*\?>', room.intro, roomtemplate)
-		phototemplate = re.sub(r'<\?\s*insert\s+room\s+filename\s*\?>', room_filename_base, phototemplate)
-		roomphototemplate = re.sub(r'<\?\s*insert\s+room\s+filename\s*\?>', room_filename_base, roomphototemplate)
-		roomtxt = ''
-		# Process all pics
-		for pic in room.photos:
-			phototxt = phototemplate
-			roomphototxt = roomphototemplate
-			phototxt = re.sub(r'<\?\s*insert\s+photo\s+filename\s*\?>', pic[0], phototxt)
-			phototxt = re.sub(r'<\?\s*insert\s+photo\s+title\s*\?>', pic[1], phototxt)
-			phototxt = re.sub(r'<\?\s*insert\s+photo\s+caption\s*\?>', pic[2], phototxt)
-			roomphototxt = re.sub(r'<\?\s*insert\s+photo\s+filename\s*\?>', pic[0], roomphototxt)
-			roomphototxt = re.sub(r'<\?\s*insert\s+photo\s+title\s*\?>', pic[1], roomphototxt)
-			roomphototxt = re.sub(r'<\?\s*insert\s+photo\s+caption\s*\?>', pic[2], roomphototxt)
-			roomtxt += roomphototxt
-			filename = pic[0] + '.txt'
-			self.__files.append(awbfile(filename, self, phototxt, room_file.mtime, pic[2]))
-		roomtemplate = re.sub(r'<\?\s*insert\s+content\s*\?>', roomtxt, roomtemplate)
-		filename = room_filename_base + '.txt'
-		f = awbfile(filename, self, roomtemplate, room_file.mtime, room.intro)
-		self.__files.append(f)
+        # Get templates
+        phototemplate = self.config['photo template']
+        roomphototemplate = self.config['room photo template']
+        roomtemplate = self.config['room template']
+        # Substitute room commands
+        roomtemplate = re.sub(r'<\?\s*insert\s+room\s+title\s*\?>', room.title, roomtemplate)
+        roomtemplate = re.sub(r'<\?\s*insert\s+room\s+intro\s*\?>', room.intro, roomtemplate)
+        phototemplate = re.sub(r'<\?\s*insert\s+room\s+filename\s*\?>', room_filename_base, phototemplate)
+        roomphototemplate = re.sub(r'<\?\s*insert\s+room\s+filename\s*\?>', room_filename_base, roomphototemplate)
+        roomtxt = ''
+        # Process all pics
+        for pic in room.photos:
+            phototxt = phototemplate
+            roomphototxt = roomphototemplate
+            phototxt = re.sub(r'<\?\s*insert\s+photo\s+filename\s*\?>', pic[0], phototxt)
+            phototxt = re.sub(r'<\?\s*insert\s+photo\s+title\s*\?>', pic[1], phototxt)
+            phototxt = re.sub(r'<\?\s*insert\s+photo\s+caption\s*\?>', pic[2], phototxt)
+            roomphototxt = re.sub(r'<\?\s*insert\s+photo\s+filename\s*\?>', pic[0], roomphototxt)
+            roomphototxt = re.sub(r'<\?\s*insert\s+photo\s+title\s*\?>', pic[1], roomphototxt)
+            roomphototxt = re.sub(r'<\?\s*insert\s+photo\s+caption\s*\?>', pic[2], roomphototxt)
+            roomtxt += roomphototxt
+            filename = pic[0] + '.txt'
+            self.__files.append(awbfile(filename, self, phototxt, room_file.mtime, pic[2]))
+        roomtemplate = re.sub(r'<\?\s*insert\s+content\s*\?>', roomtxt, roomtemplate)
+        filename = room_filename_base + '.txt'
+        f = awbfile(filename, self, roomtemplate, room_file.mtime, room.intro)
+        self.__files.append(f)
 
-	def delete_extra_files(self):
-		outputfiles = self.get_outputfiles()
-		os.path.walk(siteinfo.destdir, self.__delete_extra, outputfiles)
+    def delete_extra_files(self):
+        outputfiles = self.get_outputfiles()
+        os.path.walk(siteinfo.destdir, self.__delete_extra, outputfiles)
 
-	def __delete_extra(self, outputfiles, dirname, filenames):
-		for f in filenames:
-			abspath = os.path.join(dirname, f)
-			if abspath not in outputfiles:
-				print "Deleting " + abspath
-				rm(abspath)
+    def __delete_extra(self, outputfiles, dirname, filenames):
+        for f in filenames:
+            abspath = os.path.join(dirname, f)
+            if abspath not in outputfiles:
+                print "Deleting " + abspath
+                rm(abspath)
 
-	def __sitemap(self):
-		sitemaptxt = ''
-		if self.__relpath == '': # This is the root of the website
-			sitemaptxt += """<?xml version="1.0" encoding="UTF-8"?>
+    def __sitemap(self):
+        sitemaptxt = ''
+        if self.__relpath == '': # This is the root of the website
+            sitemaptxt += """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.google.com/schemas/sitemap/0.84" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.google.com/schemas/sitemap/0.84 http://www.google.com/schemas/sitemap/0.84/sitemap.xsd">\n"""
-		for f in self.__files:
-			if f.filetype == awbfile.filetype_process:
-				sitemaptxt += '	<url>\n'
-				sitemaptxt += '		<loc>' + siteinfo.baseurl + f.href + '</loc>\n'
-				sitemaptxt += '		<lastmod>' + f.lastmod + '</lastmod>\n'
-				sitemaptxt += '	</url>\n'
-		for d in self.__subdirs:
-			sitemaptxt += d.sitemap
-		if self.__relpath == '':
-			sitemaptxt += '</urlset>\n'
-		return sitemaptxt
+        for f in self.__files:
+            if f.filetype == awbfile.filetype_process:
+                sitemaptxt += '	<url>\n'
+                sitemaptxt += '		<loc>' + siteinfo.baseurl + f.href + '</loc>\n'
+                sitemaptxt += '		<lastmod>' + f.lastmod + '</lastmod>\n'
+                sitemaptxt += '	</url>\n'
+        for d in self.__subdirs:
+            sitemaptxt += d.sitemap
+        if self.__relpath == '':
+            sitemaptxt += '</urlset>\n'
+        return sitemaptxt
 
-	def get_outputfiles(self):
-		outputfiles = []
-		for f in self.__files:
-			if f.filetype != awbfile.filetype_ignore:
-				outputfiles.append(os.path.join(siteinfo.destdir, self.__relpath, f.destfile))
-		for d in self.__subdirs:
-			outputfiles.append(os.path.join(siteinfo.destdir, d.path))
-			outputfiles += d.get_outputfiles()
-		if self.config['type'] == awbdir.dirtype_blog:
-			for f in self.__files:
-				dirname = os.path.join(siteinfo.destdir, self.__relpath, os.path.dirname(f.filename))
-				if dirname not in outputfiles:
-					outputfiles.append(dirname)
-		return outputfiles
+    def get_outputfiles(self):
+        outputfiles = []
+        for f in self.__files:
+            if f.filetype != awbfile.filetype_ignore:
+                outputfiles.append(os.path.join(siteinfo.destdir, self.__relpath, f.destfile))
+        for d in self.__subdirs:
+            outputfiles.append(os.path.join(siteinfo.destdir, d.path))
+            outputfiles += d.get_outputfiles()
+        if self.config['type'] == awbdir.dirtype_blog:
+            for f in self.__files:
+                dirname = os.path.join(siteinfo.destdir, self.__relpath, os.path.dirname(f.filename))
+                if dirname not in outputfiles:
+                    outputfiles.append(dirname)
+        return outputfiles
 
-	def __scan_blog(self, directory):
-		contents = os.listdir(os.path.join(self.__abspath, directory))
-		files = []
-		for f in [f for f in contents if os.path.isfile(os.path.join(self.__abspath, directory, f))]:
-			fileinfo = awbfile(os.path.join(directory, f), self)
-			if fileinfo.filetype != awbfile.filetype_ignore:
-				files.append(fileinfo)
-		for d in [d for d in contents if os.path.isdir(os.path.join(self.__abspath, directory, d)) and not siteinfo.ignore(d)]:
-			files += self.__scan_blog(os.path.join(directory, d))
-		return files
+    def __scan_blog(self, directory):
+        contents = os.listdir(os.path.join(self.__abspath, directory))
+        files = []
+        for f in [f for f in contents if os.path.isfile(os.path.join(self.__abspath, directory, f))]:
+            fileinfo = awbfile(os.path.join(directory, f), self)
+            if fileinfo.filetype != awbfile.filetype_ignore:
+                files.append(fileinfo)
+        for d in [d for d in contents if os.path.isdir(os.path.join(self.__abspath, directory, d)) and not siteinfo.ignore(d)]:
+            files += self.__scan_blog(os.path.join(directory, d))
+        return files
 
-	def __filesorter(self, x, y):
-		diff = y.date - x.date
-		return diff.days*86400 + diff.seconds
+    def __filesorter(self, x, y):
+        diff = y.date - x.date
+        return diff.days*86400 + diff.seconds
 
-	def __get_path(self):
-		return self.__relpath
+    def __get_path(self):
+        return self.__relpath
 
-	def __get_fsname(self):
-		return self.__fsname
-	def __get_name(self):
-		return self.config['name']
+    def __get_fsname(self):
+        return self.__fsname
+    def __get_name(self):
+        return self.config['name']
 
-	def __get_dirtype(self):
-		return self.config['type']
+    def __get_dirtype(self):
+        return self.config['type']
 	
-	def __get_stale(self):
-		return self.__stale
+    def __get_stale(self):
+        return self.__stale
 
-	def __has_content(self):
-		has_content = False
-		for d in self.__subdirs:
-			if d.has_content:
-				has_content = True
-		if not has_content:
-			has_content = len([f for f in self.__files if f.filetype == awbfile.filetype_process]) > 0
-		return has_content
+    def __has_content(self):
+        has_content = False
+        for d in self.__subdirs:
+            if d.has_content:
+                has_content = True
+        if not has_content:
+            has_content = len([f for f in self.__files if f.filetype == awbfile.filetype_process]) > 0
+        return has_content
 	
-	path = property(__get_path)
-	fsname = property(__get_fsname)
-	name = property(__get_name)
-	dirtype = property(__get_dirtype)
-	dirtype_normal = 'normal'
-	dirtype_blog = 'blog'
-	dirtype_gallery = 'gallery'
-	sitemap = property(__sitemap)
-	stale = property(__get_stale)
-	has_content = property(__has_content)
+    path = property(__get_path)
+    fsname = property(__get_fsname)
+    name = property(__get_name)
+    dirtype = property(__get_dirtype)
+    dirtype_normal = 'normal'
+    dirtype_blog = 'blog'
+    dirtype_gallery = 'gallery'
+    sitemap = property(__sitemap)
+    stale = property(__get_stale)
+    has_content = property(__has_content)
 
 class awbfile(object):
-	def __init__(self, filename, directory, text=None, mtime=None, description=None):
-		# filename is relative to directory supplied
-		self.__directory = directory
-		self.__filename = filename
-		if (text != None) and mtime:
-			self.__generated = True
-			self.__srcfile = None
-			self.__text = text
-			self.__mtime_src = mtime
-		else:
-			self.__generated = False
-			self.__srcfile = os.path.join(siteinfo.srcdir, self.__directory.path, self.__filename)
-		self.__stale = False
-		shortname = os.path.split(filename)[1] # filename could be a path - it is in blogs
-		if siteinfo.ignore(shortname):
-			self.__filetype = 'ignore'
-		else:
-			if os.path.splitext(shortname)[1] == '.txt':
-				if siteinfo.copytxt(shortname):
-					self.__filetype = 'copy'
-					self.__init_copy()
-				else:
-					self.__filetype = 'process'
-					self.__init_process(description)
-			else:
-				self.__filetype = 'copy'
-				self.__init_copy()
+    def __init__(self, filename, directory, text=None, mtime=None, description=None):
+        # filename is relative to directory supplied
+        self.__directory = directory
+        self.__filename = filename
+        if (text != None) and mtime:
+            self.__generated = True
+            self.__srcfile = None
+            self.__text = text
+            self.__mtime_src = mtime
+        else:
+            self.__generated = False
+            self.__srcfile = os.path.join(siteinfo.srcdir, self.__directory.path, self.__filename)
+        self.__stale = False
+        shortname = os.path.split(filename)[1] # filename could be a path - it is in blogs
+        if siteinfo.ignore(shortname):
+            self.__filetype = 'ignore'
+        else:
+            if os.path.splitext(shortname)[1] == '.txt':
+                if siteinfo.copytxt(shortname):
+                    self.__filetype = 'copy'
+                    self.__init_copy()
+                else:
+                    self.__filetype = 'process'
+                    self.__init_process(description)
+            else:
+                self.__filetype = 'copy'
+                self.__init_copy()
 
-	def __init_mtimes(self):
-		if not self.__generated:
-			self.__mtime_src = os.path.getmtime(self.__srcfile)
-		if os.path.exists(self.__destfile):
-			self.__mtime_dest = os.path.getmtime(self.__destfile)
-			self.__stale = self.__mtime_src > self.__mtime_dest
-		else:
-			self.__stale = True
+    def __init_mtimes(self):
+        if not self.__generated:
+            self.__mtime_src = os.path.getmtime(self.__srcfile)
+        if os.path.exists(self.__destfile):
+            self.__mtime_dest = os.path.getmtime(self.__destfile)
+            self.__stale = self.__mtime_src > self.__mtime_dest
+        else:
+            self.__stale = True
 
-	def __init_meta(self, description=None):
-		self.__description = False
-		if self.__generated:
-			self.__title = self.__text.split('\n', 1)[0].strip()
-			match = re.search(r'^[=]+ (.*) [=]+$', self.__title)
-			if match:
-				self.__title = re.sub(r'^[=]+ (.*) [=]+$', match.group(1), self.__title)
-			if description:
-				self.__description = description
-		else:
-			try:
-				fh = open(self.__srcfile, 'r')
-				self.__title = fh.readline().strip()
-				if description:
-					self.__description = description
-				else:
-					fh.readline(); fh.readline() #Skip next 2 lines
-					desc_line = fh.readline().strip()
-					if desc_line[0:2] == '//':
-						self.__description = desc_line[2:].strip()
-			except Exception, e:
-				print "awb: non-fatal: Error reading the title from " + self.__srcfile + ".  " + str(e)
-				self.__title = ''
-			finally:
-				fh.close()
+    def __init_meta(self, description=None):
+        self.__description = False
+        if self.__generated:
+            self.__title = self.__text.split('\n', 1)[0].strip()
+            match = re.search(r'^[=]+ (.*) [=]+$', self.__title)
+            if match:
+                self.__title = re.sub(r'^[=]+ (.*) [=]+$', match.group(1), self.__title)
+            if description:
+                self.__description = description
+        else:
+            try:
+                fh = open(self.__srcfile, 'r')
+                self.__title = fh.readline().strip()
+                if description:
+                    self.__description = description
+                else:
+                    fh.readline(); fh.readline() #Skip next 2 lines
+                    desc_line = fh.readline().strip()
+                    if desc_line[0:2] == '//':
+                        self.__description = desc_line[2:].strip()
+            except Exception, e:
+                print "awb: non-fatal: Error reading the title from " + self.__srcfile + ".  " + str(e)
+                self.__title = ''
+            finally:
+                fh.close()
 
-	def __init_copy(self):
-		self.__destfile = os.path.join(siteinfo.destdir, self.__directory.path, self.__filename)
-		self.__init_mtimes()
+    def __init_copy(self):
+        self.__destfile = os.path.join(siteinfo.destdir, self.__directory.path, self.__filename)
+        self.__init_mtimes()
 
-	def __init_process(self, description=None):
-		self.__destfile = os.path.join(siteinfo.destdir, self.__directory.path, os.path.splitext(self.__filename)[0] + '.html')
-		self.__init_mtimes()
-		self.__init_meta(description)
-		if self.__directory.dirtype == awbdir.dirtype_normal:
-			self.__date = datetime.datetime.fromtimestamp(self.__mtime_src)
-		elif self.__directory.dirtype == awbdir.dirtype_gallery:
-			self.__date = datetime.datetime.fromtimestamp(self.__mtime_src)
-			if os.path.splitext(os.path.splitext(self.__filename)[0])[1] == '.gal':
-				self.__galleryroom = True
-			else:
-				self.__galleryroom = False
-		elif self.__directory.dirtype == awbdir.dirtype_blog:
-			self.__magpost = False
-			if self.__filename == 'index.txt' or self.__filename == 'contents.txt':
-				self.__date = datetime.datetime.fromtimestamp(self.__mtime_src)
-			else:
-				basepath = os.path.splitext(self.__filename)[0]
-				if os.path.splitext(basepath)[1] == '.mag':
-					basepath = os.path.splitext(basepath)[0]
-					self.__magpost = True
-				timestr = basepath.replace(os.sep, '')
-				try:
-					if len(timestr) == 8:
-						self.__date = datetime.datetime.strptime(timestr, '%Y%m%d')
-					elif len(timestr) == 10:
-						self.__date = datetime.datetime.strptime(timestr, '%Y%m%d%H')
-					elif len(timestr) == 12:
-						self.__date = datetime.datetime.strptime(timestr, '%Y%m%d%H%M')
-					else:
-						raise Exception
-				except:
-					print "awb: non-fatal: Your blog has a file whose path doesn't form a valid date/time.  The file is " + os.path.join(self.__directory.path, self.__filename)
-					self.__filetype = 'ignore'
+    def __init_process(self, description=None):
+        self.__destfile = os.path.join(siteinfo.destdir, self.__directory.path, os.path.splitext(self.__filename)[0] + '.html')
+        self.__init_mtimes()
+        self.__init_meta(description)
+        if self.__directory.dirtype == awbdir.dirtype_normal:
+            self.__date = datetime.datetime.fromtimestamp(self.__mtime_src)
+        elif self.__directory.dirtype == awbdir.dirtype_gallery:
+            self.__date = datetime.datetime.fromtimestamp(self.__mtime_src)
+            if os.path.splitext(os.path.splitext(self.__filename)[0])[1] == '.gal':
+                self.__galleryroom = True
+            else:
+                self.__galleryroom = False
+        elif self.__directory.dirtype == awbdir.dirtype_blog:
+            self.__magpost = False
+            if self.__filename == 'index.txt' or self.__filename == 'contents.txt':
+                self.__date = datetime.datetime.fromtimestamp(self.__mtime_src)
+            else:
+                basepath = os.path.splitext(self.__filename)[0]
+                if os.path.splitext(basepath)[1] == '.mag':
+                    basepath = os.path.splitext(basepath)[0]
+                    self.__magpost = True
+                timestr = basepath.replace(os.sep, '')
+                try:
+                    if len(timestr) == 8:
+                        self.__date = datetime.datetime.strptime(timestr, '%Y%m%d')
+                    elif len(timestr) == 10:
+                        self.__date = datetime.datetime.strptime(timestr, '%Y%m%d%H')
+                    elif len(timestr) == 12:
+                        self.__date = datetime.datetime.strptime(timestr, '%Y%m%d%H%M')
+                    else:
+                        raise Exception
+                except:
+                    print "awb: non-fatal: Your blog has a file whose path doesn't form a valid date/time.  The file is " + os.path.join(self.__directory.path, self.__filename)
+                    self.__filetype = 'ignore'
 
-	def __get_text_raw(self):
-		if self.__generated:
-			text = self.__text
-		else:
-			try:
-				fh = open(self.__srcfile, 'r')
-				text = fh.read()
-				fh.close()
-			except Exception, e:
-				print "awb: non-fatal: Could not read file " + self.__srcfile + ".  " + str(e)
-				text = None
-		return text
+    def __get_text_raw(self):
+        if self.__generated:
+            text = self.__text
+        else:
+            try:
+                fh = open(self.__srcfile, 'r')
+                text = fh.read()
+                fh.close()
+            except Exception, e:
+                print "awb: non-fatal: Could not read file " + self.__srcfile + ".  " + str(e)
+                text = None
+        return text
 
-	def texthalfbaked(self, extra=None):
-		return self.__execCommands(extra, True)
+    def texthalfbaked(self, extra=None):
+        return self.__execCommands(extra, True)
 	
-	def textbaked(self, extra=None):
-		return self.__execCommands(extra)
+    def textbaked(self, extra=None):
+        return self.__execCommands(extra)
 
-	def __execCommands(self, extra, halfbaked=False):
-		if not halfbaked:
-			template = self.__directory.config['main template']
-			subtemplate = self.__directory.config['sub template']
-			posttemplate = self.__directory.config['post template']
-			# insert subtemplate
-			template = re.sub(r'<\?\s*insert\s+content\s*\?>', subtemplate, template)
-			if self.__directory.config['type'] == self.__directory.dirtype_blog:
-				if self.__filename != 'index.txt' and self.__filename != 'contents.txt':
-					template = re.sub(r'<\?\s*insert\s+content\s*\?>', posttemplate, template)
-		else:
-			template = self.__directory.config['post template']
-		# process all commands
-		template = re.sub(r'<\?\s*insert\s+title\s*\?>', self.title, template)
-		template = re.sub(r'<\?\s*insert\s+meta\s+description\s+html\s*\?>', self.meta_description_html, template)
-		template = re.sub(r'<\?\s*insert\s+meta\s+description\s+xhtml\s*\?>', self.meta_description_xhtml, template)
-		template = re.sub(r'<\?\s*insert\s+content\s*\?>', self.textraw + '\n', template)
-		breadcrumbs = self.__directory.config['breadcrumbs']
-		if self.filename != 'index.txt':
-			breadcrumbs += '\n* ' + self.linkto
-		template = re.sub(r'<\?\s*insert\s+breadcrumbs\s*\?>', breadcrumbs, template)
-		template = re.sub(r'<\?\s*insert\s+name\s*\?>', self.__directory.config['name'], template)
-		for useropt in self.__directory.config['user'].keys():
-			template = re.sub(r'<\?\s*insert\s+user\s+option\s+"' + useropt + '"\s*\?>', self.__directory.config['user'][useropt], template)
-		match = re.search(r'<\?\s*insert\s+page\s+date\s+"([^"\r\n]+)"\s*\?>', template)
-		while match:
-			template = re.sub(r'<\?\s*insert\s+page\s+date\s+"([^"\r\n]+)"\s*\?>', self.date.strftime(match.group(1)), template, 1)
-			match = re.search(r'<\?\s*insert\s+page\s+date\s+"([^"\r\n]+)"\s*\?>', template)
-		if self.__directory.config['type'] == awbdir.dirtype_blog:
-			template = re.sub(r'<\?\s*insert\s+blog\s+root\s*\?>', self.__directory.path, template)
-			template = re.sub(r'<\?\s*insert\s+blog\s+recent\s*\?>', extra['recent posts'], template)
-			template = re.sub(r'<\?\s*insert\s+magazine\s+recent\s*\?>', extra['recent magazines'], template)
-			template = re.sub(r'<\?\s*insert\s+magazine\s+contents\s*\?>', extra['magazine contents'], template)
-			template = re.sub(r'<\?\s*insert\s+magazine\s+title\s*\?>', extra['magazine title'], template)
-			if not extra['magazine date']:
-				template = re.sub(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', 'News', template)
-			else:
-				match = re.search(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', template)
-				while match:
-					template = re.sub(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', extra['magazine date'].strftime(match.group(1)), template, 1)
-					match = re.search(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', template)
-		return template
+    def __execCommands(self, extra, halfbaked=False):
+        if not halfbaked:
+            template = self.__directory.config['main template']
+            subtemplate = self.__directory.config['sub template']
+            posttemplate = self.__directory.config['post template']
+            # insert subtemplate
+            template = re.sub(r'<\?\s*insert\s+content\s*\?>', subtemplate, template)
+            if self.__directory.config['type'] == self.__directory.dirtype_blog:
+                if self.__filename != 'index.txt' and self.__filename != 'contents.txt':
+                    template = re.sub(r'<\?\s*insert\s+content\s*\?>', posttemplate, template)
+        else:
+            template = self.__directory.config['post template']
+        # process all commands
+        template = re.sub(r'<\?\s*insert\s+title\s*\?>', self.title, template)
+        template = re.sub(r'<\?\s*insert\s+meta\s+description\s+html\s*\?>', self.meta_description_html, template)
+        template = re.sub(r'<\?\s*insert\s+meta\s+description\s+xhtml\s*\?>', self.meta_description_xhtml, template)
+        template = re.sub(r'<\?\s*insert\s+content\s*\?>', self.textraw + '\n', template)
+        breadcrumbs = self.__directory.config['breadcrumbs']
+        if self.filename != 'index.txt':
+            breadcrumbs += '\n* ' + self.linkto
+        template = re.sub(r'<\?\s*insert\s+breadcrumbs\s*\?>', breadcrumbs, template)
+        template = re.sub(r'<\?\s*insert\s+name\s*\?>', self.__directory.config['name'], template)
+        for useropt in self.__directory.config['user'].keys():
+            template = re.sub(r'<\?\s*insert\s+user\s+option\s+"' + useropt + '"\s*\?>', self.__directory.config['user'][useropt], template)
+        match = re.search(r'<\?\s*insert\s+page\s+date\s+"([^"\r\n]+)"\s*\?>', template)
+        while match:
+            template = re.sub(r'<\?\s*insert\s+page\s+date\s+"([^"\r\n]+)"\s*\?>', self.date.strftime(match.group(1)), template, 1)
+            match = re.search(r'<\?\s*insert\s+page\s+date\s+"([^"\r\n]+)"\s*\?>', template)
+        if self.__directory.config['type'] == awbdir.dirtype_blog:
+            template = re.sub(r'<\?\s*insert\s+blog\s+root\s*\?>', self.__directory.path, template)
+            template = re.sub(r'<\?\s*insert\s+blog\s+recent\s*\?>', extra['recent posts'], template)
+            template = re.sub(r'<\?\s*insert\s+magazine\s+recent\s*\?>', extra['recent magazines'], template)
+            template = re.sub(r'<\?\s*insert\s+magazine\s+contents\s*\?>', extra['magazine contents'], template)
+            template = re.sub(r'<\?\s*insert\s+magazine\s+title\s*\?>', extra['magazine title'], template)
+            if not extra['magazine date']:
+                template = re.sub(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', 'News', template)
+            else:
+                match = re.search(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', template)
+                while match:
+                    template = re.sub(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', extra['magazine date'].strftime(match.group(1)), template, 1)
+                    match = re.search(r'<\?\s*insert\s+magazine\s+date\s+"([^"\r\n]+)"\s*\?>', template)
+        return template
 
-	def __get_filetype(self):
-		return self.__filetype
+    def __get_filetype(self):
+        return self.__filetype
 
-	def __get_filename(self):
-		return self.__filename
+    def __get_filename(self):
+        return self.__filename
 
-	def __get_mtime_src(self):
-		return self.__mtime_src
+    def __get_mtime_src(self):
+        return self.__mtime_src
 
-	def __get_srcfile(self):
-		return self.__srcfile
+    def __get_srcfile(self):
+        return self.__srcfile
 		
-	def __get_destfile(self):
-		return self.__destfile
+    def __get_destfile(self):
+        return self.__destfile
 
-	def __get_stale(self):
-		return self.__stale
+    def __get_stale(self):
+        return self.__stale
 
-	def __get_magpost(self):
-		return self.__magpost
+    def __get_magpost(self):
+        return self.__magpost
 
-	def __get_galleryroom(self):
-		return self.__galleryroom
+    def __get_galleryroom(self):
+        return self.__galleryroom
 
-	def __get_date(self):
-		return self.__date
+    def __get_date(self):
+        return self.__date
 
-	def __get_title(self):
-		return self.__title
+    def __get_title(self):
+        return self.__title
 
-	def __get_description_html(self):
-		if self.__description:
-			return '<meta name="description" content="' + self.__description.replace('"', "'") + '">'
-		else:
-			return '';
+    def __get_description_html(self):
+        if self.__description:
+            return '<meta name="description" content="' + self.__description.replace('"', "'") + '">'
+        else:
+            return '';
 
-	def __get_description_xhtml(self):
-		if self.__description:
-			return '<meta name="description" content="' + self.__description.replace('"', "'") + '" />'
-		else:
-			return '';
+    def __get_description_xhtml(self):
+        if self.__description:
+            return '<meta name="description" content="' + self.__description.replace('"', "'") + '" />'
+        else:
+            return '';
 
-	def __href(self):
-		href = self.__destfile.replace(siteinfo.destdir, '').replace(os.path.sep, '/')
-		return href
+    def __href(self):
+        href = self.__destfile.replace(siteinfo.destdir, '').replace(os.path.sep, '/')
+        return href
 
-	def __linkto(self):
-		return 'link:' + self.href + '[' + self.__title + ']'
+    def __linkto(self):
+        return 'link:' + self.href + '[' + self.__title + ']'
 
-	def __linklocal(self):
-		return 'link:' + os.path.split(self.href)[1] + '[' + self.__title + ']'
+    def __linklocal(self):
+        return 'link:' + os.path.split(self.href)[1] + '[' + self.__title + ']'
 
-	def __get_lastmod(self):
-		lastmod = datetime.datetime.fromtimestamp(self.__mtime_src)
-		return lastmod.strftime('%G-%m-%dT%H:%M:%SZ')
+    def __get_lastmod(self):
+        lastmod = datetime.datetime.fromtimestamp(self.__mtime_src)
+        return lastmod.strftime('%G-%m-%dT%H:%M:%SZ')
 
-	filetype = property(__get_filetype)
-	filetype_ignore = 'ignore'
-	filetype_copy = 'copy'
-	filetype_process = 'process'
+    filetype = property(__get_filetype)
+    filetype_ignore = 'ignore'
+    filetype_copy = 'copy'
+    filetype_process = 'process'
 
-	filename = property(__get_filename)
-	mtime = property(__get_mtime_src)
-	srcfile = property(__get_srcfile)
-	destfile = property(__get_destfile)
-	stale = property(__get_stale)
-	magpost = property(__get_magpost)
-	galleryroom = property(__get_galleryroom)
-	date = property(__get_date)
-	title = property(__get_title)
-	meta_description_html = property(__get_description_html)
-	meta_description_xhtml = property(__get_description_xhtml)
-	textraw = property(__get_text_raw)
-	href = property(__href)
-	linkto = property(__linkto)
-	linklocal = property(__linklocal)
-	lastmod = property(__get_lastmod)
+    filename = property(__get_filename)
+    mtime = property(__get_mtime_src)
+    srcfile = property(__get_srcfile)
+    destfile = property(__get_destfile)
+    stale = property(__get_stale)
+    magpost = property(__get_magpost)
+    galleryroom = property(__get_galleryroom)
+    date = property(__get_date)
+    title = property(__get_title)
+    meta_description_html = property(__get_description_html)
+    meta_description_xhtml = property(__get_description_xhtml)
+    textraw = property(__get_text_raw)
+    href = property(__href)
+    linkto = property(__linkto)
+    linklocal = property(__linklocal)
+    lastmod = property(__get_lastmod)
 
 class awbdirconfig(object):
-	def __init__(self, directory, parentconfig=None):
-		self.__config = {}
-		# Put in defaults
-		self.__config['sub template'] = '<?insert content?>'
-		if not parentconfig:
-			self.__config['type'] = awbdir.dirtype_normal
-			self.__config['main template'] = '<?insert content?>'
-			self.__config['post template'] = '<?insert content?>'
-			self.__config['photo template'] = 'image::<?insert room filename?>/big/<?insert photo filename?>[]\n'
-			self.__config['room photo template'] = 'image::<?insert room filename?>/small/<?insert photo filename?>[link="<?insert photo filename?>.html"]\n'
-			self.__config['room template'] = '= <?insert room title?> =\n\n<?insert room intro?>\n\n<?insert content?>'
-			self.__config['breadcrumbs'] = ''
-			self.__config['user'] = {}
-		else:
-			self.__config['type'] = parentconfig['type']
-			self.__config['main template'] = parentconfig['main template']
-			self.__config['post template'] = parentconfig['post template']
-			self.__config['photo template'] = parentconfig['photo template']
-			self.__config['room photo template'] = parentconfig['room photo template']
-			self.__config['room template'] = parentconfig['room template']
-			self.__config['breadcrumbs'] = parentconfig['breadcrumbs']
-			self.__config['user'] = parentconfig['user']
+    def __init__(self, directory, parentconfig=None):
+        self.__config = {}
+        # Put in defaults
+        self.__config['sub template'] = '<?insert content?>'
+        if not parentconfig:
+            self.__config['type'] = awbdir.dirtype_normal
+            self.__config['main template'] = '<?insert content?>'
+            self.__config['post template'] = '<?insert content?>'
+            self.__config['photo template'] = 'image::<?insert room filename?>/big/<?insert photo filename?>[]\n'
+            self.__config['room photo template'] = 'image::<?insert room filename?>/small/<?insert photo filename?>[link="<?insert photo filename?>.html"]\n'
+            self.__config['room template'] = '= <?insert room title?> =\n\n<?insert room intro?>\n\n<?insert content?>'
+            self.__config['breadcrumbs'] = ''
+            self.__config['user'] = {}
+        else:
+            self.__config['type'] = parentconfig['type']
+            self.__config['main template'] = parentconfig['main template']
+            self.__config['post template'] = parentconfig['post template']
+            self.__config['photo template'] = parentconfig['photo template']
+            self.__config['room photo template'] = parentconfig['room photo template']
+            self.__config['room template'] = parentconfig['room template']
+            self.__config['breadcrumbs'] = parentconfig['breadcrumbs']
+            self.__config['user'] = parentconfig['user']
 
-		if os.path.isfile(os.path.join(siteinfo.srcdir, directory, CONFIG_FILE)):
-			self.__config_mtime = os.path.getmtime(os.path.join(siteinfo.srcdir, directory, CONFIG_FILE))
-		else:
-			self.__config_mtime = None
+        if os.path.isfile(os.path.join(siteinfo.srcdir, directory, CONFIG_FILE)):
+            self.__config_mtime = os.path.getmtime(os.path.join(siteinfo.srcdir, directory, CONFIG_FILE))
+        else:
+            self.__config_mtime = None
 
-		if os.path.isfile(os.path.join(siteinfo.srcdir, directory, TEMPLATE_FILE)):
-			self.__template_mtime = os.path.getmtime(os.path.join(siteinfo.srcdir, directory, TEMPLATE_FILE))
-		else:
-			self.__template_mtime = None
+        if os.path.isfile(os.path.join(siteinfo.srcdir, directory, TEMPLATE_FILE)):
+            self.__template_mtime = os.path.getmtime(os.path.join(siteinfo.srcdir, directory, TEMPLATE_FILE))
+        else:
+            self.__template_mtime = None
 
-		# Read options in from file...
-		try:
-			config = ConfigParser.RawConfigParser()
-			config.read(os.path.join(siteinfo.srcdir, directory, CONFIG_FILE))
-		except Exception, e:
-			print "awb: non-fatal: Could not read configuration from " + directory + ".  Using defaults.  " + str(e)
-			return
-		self.__config['type'] = config.getQuick('dir setup', 'type', self.__config['type'])
-		# Directory name
-		if directory == '':
-			self.__config['name'] = 'Home'
-		else:
-			self.__config['name'] = directory
-		self.__config['name'] = config.getQuick('dir setup', 'name', self.__config['name'])
-		# Templates
-		templates = templateFile(os.path.join(siteinfo.srcdir, directory, TEMPLATE_FILE))
-		if templates['main template']:
-			self.__config['main template'] = templates['main template']
-		if templates['sub template']:
-			self.__config['sub template'] = templates['sub template']
-		if templates['post template']:
-			self.__config['post template'] = templates['post template']
-		if templates['photo template']:
-			self.__config['photo template'] = templates['photo template']
-		if templates['room photo template']:
-			self.__config['room photo template'] = templates['room photo template']
-		if templates['room template']:
-			self.__config['room template'] = templates['room template']
-		# User options, breadcrumbs
-		self.__config['user'] = config.optionsQuick('user', self.__config['user'])
-		self.__config['breadcrumbs'] = self.__config['breadcrumbs'] + '\n* link:/' + directory + '[' + self.__config['name'] + ']'
-		# Blog options
-		self.__config['num main posts'] = config.getQuickInt('blog', 'num main posts', 5)
-		self.__config['num recent posts'] = config.getQuickInt('blog', 'num recent posts', 5)
+        # Read options in from file...
+        try:
+            config = ConfigParser.RawConfigParser()
+            config.read(os.path.join(siteinfo.srcdir, directory, CONFIG_FILE))
+        except Exception, e:
+            print "awb: non-fatal: Could not read configuration from " + directory + ".  Using defaults.  " + str(e)
+            return
+        self.__config['type'] = config.getQuick('dir setup', 'type', self.__config['type'])
+        # Directory name
+        if directory == '':
+            self.__config['name'] = 'Home'
+        else:
+            self.__config['name'] = directory
+        self.__config['name'] = config.getQuick('dir setup', 'name', self.__config['name'])
+        # Templates
+        templates = templateFile(os.path.join(siteinfo.srcdir, directory, TEMPLATE_FILE))
+        if templates['main template']:
+            self.__config['main template'] = templates['main template']
+        if templates['sub template']:
+            self.__config['sub template'] = templates['sub template']
+        if templates['post template']:
+            self.__config['post template'] = templates['post template']
+        if templates['photo template']:
+            self.__config['photo template'] = templates['photo template']
+        if templates['room photo template']:
+            self.__config['room photo template'] = templates['room photo template']
+        if templates['room template']:
+            self.__config['room template'] = templates['room template']
+        # User options, breadcrumbs
+        self.__config['user'] = config.optionsQuick('user', self.__config['user'])
+        self.__config['breadcrumbs'] = self.__config['breadcrumbs'] + '\n* link:/' + directory + '[' + self.__config['name'] + ']'
+        # Blog options
+        self.__config['num main posts'] = config.getQuickInt('blog', 'num main posts', 5)
+        self.__config['num recent posts'] = config.getQuickInt('blog', 'num recent posts', 5)
 
-	def __getitem__(self, option):
-		if self.__config.has_key(option):
-			return self.__config[option]
-		else:
-			return None
+    def __getitem__(self, option):
+        if self.__config.has_key(option):
+            return self.__config[option]
+        else:
+            return None
 	
-	def __get_config_mtime(self):
-		return self.__config_mtime
+    def __get_config_mtime(self):
+        return self.__config_mtime
 	
-	def __get_template_mtime(self):
-		return self.__template_mtime
+    def __get_template_mtime(self):
+        return self.__template_mtime
 	
-	config_mtime = property(__get_config_mtime)
-	template_mtime = property(__get_template_mtime)
+    config_mtime = property(__get_config_mtime)
+    template_mtime = property(__get_template_mtime)
 
 class templateFile:
-	def __init__(self, filename):
-		self.__templates = {}
+    def __init__(self, filename):
+        self.__templates = {}
 
-		if os.path.isfile(filename):
-			fh = open(filename, 'r')
-			text = fh.readlines()
-			fh.close()
-			regex = re.compile(r'^\[(.+)\][\r\n]*$')
-			section = None
-			sectiontxt = ''
-			for line in text:
-				match = regex.match(line)
-				if match:
-					if section:
-						self.__templates[section] = sectiontxt
-					section = match.group(1)
-					sectiontxt = ''
-				else:
-					sectiontxt += line
-			if section:
-				self.__templates[section] = sectiontxt
+        if os.path.isfile(filename):
+            fh = open(filename, 'r')
+            text = fh.readlines()
+            fh.close()
+            regex = re.compile(r'^\[(.+)\][\r\n]*$')
+            section = None
+            sectiontxt = ''
+            for line in text:
+                match = regex.match(line)
+                if match:
+                    if section:
+                        self.__templates[section] = sectiontxt
+                    section = match.group(1)
+                    sectiontxt = ''
+                else:
+                    sectiontxt += line
+            if section:
+                self.__templates[section] = sectiontxt
 
-	def __getitem__(self, key):
-		if self.__templates.has_key(key):
-			return self.__templates[key]
-		else:
-			return None
+    def __getitem__(self, key):
+        if self.__templates.has_key(key):
+            return self.__templates[key]
+        else:
+            return None
 
 class roomFile:
-	def __init__(self, filename):
-		fh = open(filename, 'r')
-		text = fh.readlines()
-		fh.close()
-		photoregex = re.compile(r'^\[(.+)\][\r\n]*$')
-		valueregex = re.compile(r'^(.+):(.*)')
-		photo = ''
-		title = ''
-		caption = ''
-		self.__roomtitle = ''
-		self.__roomintro = ''
-		photos = []
-		for line in text:
-			match = photoregex.match(line)
-			if match:
-				if photo:
-					if photo != 'room':
-						photos.append((photo, title, caption))
-				photo = match.group(1)
-				title = ''
-				caption = ''
-			else:
-				match = valueregex.match(line)
-				if match:
-					if photo == 'room':
-						if match.group(1).strip() == 'title':
-							self.__roomtitle = match.group(2).strip()
-						elif match.group(1).strip() == 'intro':
-							self.__roomintro = match.group(2).strip()
-					else:
-						if match.group(1).strip() == 'title':
-							title = match.group(2).strip()
-						elif match.group(1).strip() == 'caption':
-							caption = match.group(2).strip()
-		if photo:
-			if photo != 'room':
-				photos.append((photo, title, caption))
-		self.photos = tuple(photos)
+    def __init__(self, filename):
+        fh = open(filename, 'r')
+        text = fh.readlines()
+        fh.close()
+        photoregex = re.compile(r'^\[(.+)\][\r\n]*$')
+        valueregex = re.compile(r'^(.+):(.*)')
+        photo = ''
+        title = ''
+        caption = ''
+        self.__roomtitle = ''
+        self.__roomintro = ''
+        photos = []
+        for line in text:
+            match = photoregex.match(line)
+            if match:
+                if photo:
+                    if photo != 'room':
+                        photos.append((photo, title, caption))
+                photo = match.group(1)
+                title = ''
+                caption = ''
+            else:
+                match = valueregex.match(line)
+                if match:
+                    if photo == 'room':
+                        if match.group(1).strip() == 'title':
+                            self.__roomtitle = match.group(2).strip()
+                        elif match.group(1).strip() == 'intro':
+                            self.__roomintro = match.group(2).strip()
+                    else:
+                        if match.group(1).strip() == 'title':
+                            title = match.group(2).strip()
+                        elif match.group(1).strip() == 'caption':
+                            caption = match.group(2).strip()
+        if photo:
+            if photo != 'room':
+                photos.append((photo, title, caption))
+        self.photos = tuple(photos)
 
-	def __get_title(self):
-		return self.__roomtitle
+    def __get_title(self):
+        return self.__roomtitle
 	
-	def __get_intro(self):
-		return self.__roomintro
+    def __get_intro(self):
+        return self.__roomintro
 
-	title = property(__get_title)
-	intro = property(__get_intro)
+    title = property(__get_title)
+    intro = property(__get_intro)
 
 def writeFile(text, filename):
-	fh = open(filename, 'w')
-	fh.write(text)
-	fh.close()
+    fh = open(filename, 'w')
+    fh.write(text)
+    fh.close()
 
 def rm(filename):
-	try:
-		if os.path.isfile(filename) or os.path.islink(filename):
-			os.remove(filename)
-		elif os.path.isdir(filename):
-			shutil.rmtree(filename)
-	except Exception, e:
-		print "awb: non-fatal: Could not remove file " + filename + ".  " + str(e)
+    try:
+        if os.path.isfile(filename) or os.path.islink(filename):
+            os.remove(filename)
+        elif os.path.isdir(filename):
+            shutil.rmtree(filename)
+    except Exception, e:
+        print "awb: non-fatal: Could not remove file " + filename + ".  " + str(e)
 
 def copyFile(src, dest):
-	try:
-		if not os.path.isdir(os.path.split(dest)[0]):
-			os.makedirs(os.path.split(dest)[0])
-		shutil.copyfile(src, dest)
-	except Exception, e:
-		print "awb: non-fatal: Failed to copy " + src + " to " + dest + ".  " + str(e)
+    try:
+        if not os.path.isdir(os.path.split(dest)[0]):
+            os.makedirs(os.path.split(dest)[0])
+        shutil.copyfile(src, dest)
+    except Exception, e:
+        print "awb: non-fatal: Failed to copy " + src + " to " + dest + ".  " + str(e)
 
 def readFile(filename):
-	try:
-		fh = open(filename, 'r')
-		text = fh.read()
-		fh.close()
-	except:
-		return None
-	return text
+    try:
+        fh = open(filename, 'r')
+        text = fh.read()
+        fh.close()
+    except:
+        return None
+    return text
 
 def getQuick(self, section, option, default=''):
-	try:
-		value = self.get(section, option).strip()
-	except Exception, e:
-		return default
-	return value
+    try:
+        value = self.get(section, option).strip()
+    except Exception, e:
+        return default
+    return value
 
 def getQuickInt(self, section, option, default=0):
-	try:
-		value = self.getint(section, option)
-	except Exception, e:
-		return default
-	return value
+    try:
+        value = self.getint(section, option)
+    except Exception, e:
+        return default
+    return value
 
 def optionsQuick(self, section, optiondict):
-	newoptions = optiondict.copy()
-	try:
-		options = self.options(section)
-		for option in options:
-			newoptions[option] = self.get(section, option).strip()
-	except Exception, e:
-		pass
-	return newoptions
+    newoptions = optiondict.copy()
+    try:
+        options = self.options(section)
+        for option in options:
+            newoptions[option] = self.get(section, option).strip()
+    except Exception, e:
+        pass
+    return newoptions
 
 ConfigParser.RawConfigParser.getQuick = getQuick
 ConfigParser.RawConfigParser.getQuickInt = getQuickInt
 ConfigParser.RawConfigParser.optionsQuick = optionsQuick
 
 def fnmatchin(name, patterns):
-	for p in patterns:
-		if fnmatch.fnmatch(name, p):
-			return True
-	return False
+    for p in patterns:
+        if fnmatch.fnmatch(name, p):
+            return True
+    return False
 
 if __name__ == "__main__":
-	# Parse the commandline
-	if len(sys.argv) == 2 or len(sys.argv) == 3:
-		sitename = sys.argv[len(sys.argv)-1]
-		if len(sys.argv) == 3:
-			if sys.argv[1] == '-r':
-				BUILD_ALL = True
-			else:
-				print "awb - asciidoc website builder.  usage: awb [-r] websitename"
-				sys.exit()
-	else:
-		print "awb - asciidoc website builder.  usage: awb [-r] websitename"
-		sys.exit()
-	siteinfo = awbsiteinfo(sitename)
-	siteinfo.restoreCache()
-	website = awbdir('')
-	website.process()
-	website.delete_extra_files()
-	siteinfo.saveCache()
-	sitemap_xml = website.sitemap
-	print "Generating sitemap.xml"
-	writeFile(sitemap_xml, os.path.join(siteinfo.destdir, 'sitemap.xml'))
+    # Parse the commandline
+    if len(sys.argv) == 2 or len(sys.argv) == 3:
+        sitename = sys.argv[len(sys.argv)-1]
+        if len(sys.argv) == 3:
+            if sys.argv[1] == '-r':
+                BUILD_ALL = True
+            else:
+                print "awb - asciidoc website builder.  usage: awb [-r] websitename"
+                sys.exit()
+    else:
+        print "awb - asciidoc website builder.  usage: awb [-r] websitename"
+        sys.exit()
+    siteinfo = awbsiteinfo(sitename)
+    siteinfo.restoreCache()
+    website = awbdir('')
+    website.process()
+    website.delete_extra_files()
+    siteinfo.saveCache()
+    sitemap_xml = website.sitemap
+    print "Generating sitemap.xml"
+    writeFile(sitemap_xml, os.path.join(siteinfo.destdir, 'sitemap.xml'))
 
