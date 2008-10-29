@@ -1,0 +1,99 @@
+#!/bin/sh
+# (C) 2008 Guy Hulbert <ghperl@gmail.com>
+
+set -e
+
+ROOT=$HOME/x
+PROG='awb'
+# save paths from ROOT since we redefine ROOT when testing
+CVS=$ROOT/ar/awb
+SRC=$ROOT/gh
+
+DIR=$1
+if [ -z "$DIR" ]
+then
+    echo Usage: $0 DIR
+    exit 1
+fi
+shift
+
+if [ $DIR == $PROG ]
+then
+    echo "Final Build $PROG in $ROOT"
+else
+    echo "Testing ... $PROG setup in ./$DIR"
+    ROOT=`pwd`
+fi
+BUILD=$ROOT/$DIR
+if [ -d $BUILD ]
+    then
+    echo "DIR $DIR exists under $ROOT ... bye."
+    exit 0
+fi
+
+SUB='doc'
+SRC=$SRC/$PROG
+mkdir -p $BUILD
+cd $BUILD
+
+cat > README <<EOF
+This is Jared Henley's awb.  The latest copyright is:
+ Copyright 2007, 2008 Jared Henley <multixrulz@users.sourceforge.net>
+
+The license is GPL v2, see COPYING.
+
+Git repo created by Guy Hulbert from files:
+
+	awb-0.1.tar.gz
+	awb-0.1.1.tar.gz
+	awb-0.2.tar.gz
+	awb-0.2.1.tar.bz2
+	awb-0.2.4.tar.bz2
+	awb-0.2.2.tar.bz2
+
+(obtained from a sourceforge mirror) by running the 'import' script.
+EOF
+
+git init
+git add .
+git commit -m "Initialized."
+
+if [ $DIR == $PROG ]
+then
+    cp -rp $SRC/$SUB .
+    git add $SUB
+    git commit -m "doc"
+fi
+
+for v in 0.1 0.1.1 0.2
+do
+  tar zxf $CVS/awb-$v.tar.gz
+  x=$v
+  if [ $v == '0.2' ]
+      then
+      x=tarball
+  fi
+  mv -f awb-$x/* .
+  rmdir awb-$x
+  git add awb COPYING manual.txt manual.html
+  git commit -m "imported version $v"
+  git tag $v
+done
+
+for v in 0.2.1 0.2.2 0.2.4
+do
+  tar jxf $CVS/awb-$v.tar.bz2
+  mv -f awb-$v/* .
+  rmdir awb-$v
+  git add awb COPYING manual.txt manual.html
+  git commit -m "imported version $v"
+  git tag $v
+done
+cp $SRC/import .
+git add import
+git commit -m "copied import script to git archive"
+# 
+# Text for http://awb.cotef.net/
+# cd $SRC/$SUB
+# make text
+#
