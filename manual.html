@@ -372,7 +372,8 @@ All the yummy features of AsciiDoc
 siteroot: /home/me/mywebsite
 baseurl: http://my.web.site
 asciidoc options: -d book -b html4
-tidy: true</tt></pre>
+tidy: true
+index link local: true</tt></pre>
 </div></div>
 <div class="para"><p>This simply defines a website known to awb as "mywebsite".  The options are:</p></div>
 <div class="vlist"><dl>
@@ -405,7 +406,15 @@ tidy
 </dt>
 <dd>
 <p>
-        true/false &#8212; whether to use HTML tidy on the output.  If this is set true, you must also have a tidy-options in <tt>siteroot/src</tt>.  See <a href="http://tidy.sourceforge.net/docs/quickref.html">http://tidy.sourceforge.net/docs/quickref.html</a> for details of what to put in this file.
+        true/false (default: false) &#8212; whether to use HTML tidy on the output.  If this is set true, you must also have a tidy-options in <tt>siteroot/src</tt>.  See <a href="http://tidy.sourceforge.net/docs/quickref.html">http://tidy.sourceforge.net/docs/quickref.html</a> for details of what to put in this file.
+</p>
+</dd>
+<dt>
+index link local
+</dt>
+<dd>
+<p>
+        true/false (default: false) &#8212; when generating index.html files, true generates local links (eg. page.html), false generates absolute links (eg. /docs/manuals/page.html)
 </p>
 </dd>
 </dl></div>
@@ -517,6 +526,7 @@ title: The title of the photo.
 caption: A caption for the photo.</tt></pre>
 </div></div>
 <div class="para"><p>The title, intro and caption values are optional, but if you don't use them, don't include them in your templates either.</p></div>
+<div class="para"><p>If you are inserting the meta description tag, the intro is used as the room description, and the caption is used as the photo description.</p></div>
 </div>
 <h2 id="_templates">Templates</h2>
 <div class="sectionbody">
@@ -580,6 +590,17 @@ insert title
 <dd>
 <p>
         Inserts the title of the AsciiDoc source file that is being processed.
+</p>
+</dd>
+<dt>
+insert meta description html
+</dt>
+<dt>
+insert meta description xhtml
+</dt>
+<dd>
+<p>
+        These both insert a &lt;meta name="description" content="A description of the page"&gt; tag.  If specified as xhtml, the closing / is also included.  If the document has no description, this command is replaced with nothing (rather than an empty description).  In regular documents, the description must be on the fourth line, and that line must start with &#8220;//&#8221;.  This makes it a comment to AsciiDoc, so your description won't appear in the main text of the page.  For galleries, the intro or caption will be used (see above).
 </p>
 </dd>
 <dt>
@@ -736,7 +757,7 @@ insert photo caption
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2008-05-13 17:54:40 EST
+Last updated 2008-05-30 13:36:25 EST
 </div>
 </div>
 </body>

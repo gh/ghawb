@@ -23,6 +23,7 @@ siteroot: /home/me/mywebsite
 baseurl: http://my.web.site
 asciidoc options: -d book -b html4
 tidy: true
+index link local: true
 ----
 
 This simply defines a website known to awb as "mywebsite".  The options are:
@@ -37,7 +38,10 @@ asciidoc options::
 	Options to be passed to AsciiDoc.  I use this to specify a custom html4.conf file in addition to the options shown in the example.
 
 tidy::
-	true/false -- whether to use HTML tidy on the output.  If this is set true, you must also have a tidy-options in +siteroot/src+.  See http://tidy.sourceforge.net/docs/quickref.html[] for details of what to put in this file.
+	true/false (default: false) -- whether to use HTML tidy on the output.  If this is set true, you must also have a tidy-options in +siteroot/src+.  See http://tidy.sourceforge.net/docs/quickref.html[] for details of what to put in this file.
+
+index link local::
+	true/false (default: false) -- when generating index.html files, true generates local links (eg. page.html), false generates absolute links (eg. /docs/manuals/page.html)
 
 Once you have a website configured and some source files written, simply issue the command
 
@@ -140,6 +144,8 @@ caption: A caption for the photo.
 
 The title, intro and caption values are optional, but if you don't use them, don't include them in your templates either.
 
+If you are inserting the meta description tag, the intro is used as the room description, and the caption is used as the photo description.
+
 Templates
 ---------
 
@@ -204,6 +210,11 @@ Commands may be used anywhere in an awb source file, but the most common place t
 
 insert title::
 	Inserts the title of the AsciiDoc source file that is being processed.
+
+insert meta description html::
+
+insert meta description xhtml::
+	These both insert a <meta name="description" content="A description of the page"> tag.  If specified as xhtml, the closing / is also included.  If the document has no description, this command is replaced with nothing (rather than an empty description).  In regular documents, the description must be on the fourth line, and that line must start with ``//''.  This makes it a comment to AsciiDoc, so your description won't appear in the main text of the page.  For galleries, the intro or caption will be used (see above).
 
 insert content::
 	Inserts the content of the page.  The meaning of content depends on the template being used, but it follows common sense and really shouldn't be confusing.

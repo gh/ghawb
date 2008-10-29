@@ -28,9 +28,7 @@ import cPickle
 
 CONFIG_FILE = 'awbdir.conf'
 TEMPLATE_FILE = 'template.conf'
-
 BUILD_ALL = False
-
 INDENT = ''
 
 class awbsiteinfo(object):
@@ -43,17 +41,17 @@ class awbsiteinfo(object):
 			siteroot = config.get(sitename, 'siteroot')
 			self.__asciidoc_options = config.getQuick(sitename, 'asciidoc options')
 			self.__baseurl = config.get(sitename, 'baseurl')
-			self.__tidy_html = False
-			if config.getQuick(sitename, 'tidy', 'false').strip().lower() == 'true':
-				self.__tidy_html = True
+			self.__tidy_html = config.getQuick(sitename, 'tidy', 'false').strip().lower() == 'true'
+			self.__index_link_local = config.getQuick(sitename, 'index link local', 'false').strip().lower() == 'true'
 		else:
 			print "awb - asciidoc website builder.  Site not found.  usage: awb [-r] websitename"
 			sys.exit()
-		# Make this OS independent
+		# FIXME Make this OS independent
 		if siteroot == '/':
 			print "Don't be ridiculous.  Build your site from /home or something."
 			sys.exit()
-		
+			
+		# Check for existence of directories
 		self.__srcdir = os.path.join(siteroot, 'src')
 		self.__destdir = os.path.join(siteroot, 'html')
 		if not os.path.isdir(siteroot):
@@ -63,19 +61,16 @@ class awbsiteinfo(object):
 			print "Site source " + self.__srcdir + " is not a directory."
 			sys.exit()
 		
+		# Read in ignore file
 		self.__ignore = [CONFIG_FILE, TEMPLATE_FILE]
-		ignorefile = os.path.join(self.__srcdir, '.ignore')
-		ignoretext = readFile(ignorefile)
+		ignoretext = readFile(os.path.join(self.__srcdir, '.ignore'))
 		if ignoretext:
-			ignore = re.split('[\n,\r]{1,2}', ignoretext)
-			self.__ignore += ignore
-
+			self.__ignore += re.split('[\n,\r]{1,2}', ignoretext)
+		# Read in copytxt file
 		self.__copytxt = []
-		copytxtfile = os.path.join(self.__srcdir, '.copytxt')
-		copytxttext = readFile(copytxtfile)
+		copytxttext = readFile(os.path.join(self.__srcdir, '.copytxt'))
 		if copytxttext:
-			copytxt = re.split('[\n,\r]{1,2}', copytxttext)
-			self.__copytxt += copytxt
+			self.__copytxt += re.split('[\n,\r]{1,2}', copytxttext)
 
 	def restoreCache(self):
 		if os.path.isfile(os.path.join(os.path.expanduser('~'), '.awb', sitename + '.cache')):
@@ -109,26 +104,29 @@ class awbsiteinfo(object):
 
 	def callAsciidoc(self, destfile, text):
 		# Make this OS-independent
-		tmpfile = os.path.join('/tmp', destfile.replace(os.sep, '_'))
-		tmpfile2 = os.path.join('/tmp', 'tidy_' + destfile.replace(os.sep, '_'))
+		tmpfile = os.path.join('/tmp', destfile.replace(os.sep, '_') + '.txt')
+		tmpfile2 = os.path.join('/tmp', 'tidy' + destfile.replace(os.sep, '_'))
 		writeFile(text, tmpfile)
 		try:
 			print INDENT + "Writing " + destfile
 			if not os.path.isdir(os.path.split(destfile)[0]):
 				os.makedirs(os.path.split(destfile)[0])
-			if self.__tidy_html:
-				asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + tmpfile2 + ' ' + tmpfile
-			else:
-				asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + destfile + ' ' + tmpfile
+			asciidoccmd = 'asciidoc ' + self.__asciidoc_options + ' -o ' + tmpfile2 + ' ' + tmpfile
 			if os.system(asciidoccmd) != 0:
-				print "AsciiDoc error.  awb will now quit."
+				print "AsciiDoc error.  awb will now exit."
+				exit()
 			if self.__tidy_html:
-				os.system('cat ' + tmpfile2 + ' | tidy -config ' + os.path.join(siteinfo.__srcdir, 'tidy-options') + ' -o ' + destfile)
+				tidycmd = 'cat ' + tmpfile2 + ' | tidy -config ' + os.path.join(siteinfo.__srcdir, 'tidy-options') + ' -o ' + destfile
+				if os.system(tidycmd) != 0:
+					print "HTML Tidy error.  awb will now exit."
+			else:
+				os.system('mv ' + tmpfile2 + ' ' + destfile)
 		except Exception, e:
 			print e
 			sys.exit()
 		finally:
 			rm(tmpfile)
+			rm(tmpfile2)
 
 	def ignore(self, filename):
 		return fnmatchin(filename, self.__ignore)
@@ -145,12 +143,17 @@ class awbsiteinfo(object):
 	def __get_baseurl(self):
 		return self.__baseurl
 
+	def __get_index_link_local(self):
+		return self.__index_link_local
+
 	srcdir = property(__get_srcdir)
 	destdir = property(__get_destdir)
 	baseurl = property(__get_baseurl)
+	index_link_local = property(__get_index_link_local)
 
 class awbdir(object):
 	def __init__(self, directory, parent=None):
+		self.__fsname = os.path.split(directory)[1]
 		if directory == '': # directory is the root for the website
 			self.__relpath = directory
 			parentconfig = None
@@ -162,15 +165,9 @@ class awbdir(object):
 		
 		cacheData = siteinfo.readCache(self.__relpath)
 		if not cacheData:
-			if self.config.config_mtime or self.config.template_mtime:
-				self.__stale = True
-			else:
-				self.__stale = False
+			self.__stale = self.config.config_mtime or self.config.template_mtime
 		else:
-			if self.config.config_mtime > cacheData[0] or self.config.template_mtime > cacheData[1]:
-				self.__stale = True
-			else:
-				self.__stale = False
+			self.__stale = self.config.config_mtime > cacheData[0] or self.config.template_mtime > cacheData[1]
 		if parent: # parent overrides anything above
 			if parent.stale:
 				self.__stale = True
@@ -194,10 +191,6 @@ class awbdir(object):
 				self.__subdirs.append(awbdir(d, self))
 			elif self.config['type'] == awbdir.dirtype_blog:
 				self.__files += self.__scan_blog(d)
-				for f in self.__files:
-					if f.stale:
-						if f.filetype == awbfile.filetype_process:
-							self.__stale = True
 
 	def process(self):
 		global INDENT
@@ -223,7 +216,11 @@ class awbdir(object):
 			indextxt += '='
 		indextxt += '\n'
 		for d in self.__subdirs:
-			indextxt += '\n* link:/' + d.path + '[' + d.name + ']'
+			if d.has_content:
+				if siteinfo.index_link_local:
+					indextxt += '\n* link:' + d.fsname + '[' + d.name + ']'
+				else:
+					indextxt += '\n* link:/' + d.path + '[' + d.name + ']'
 		for f in self.__files:
 			if f.filetype == awbfile.filetype_copy:
 				if f.stale:
@@ -241,14 +238,18 @@ class awbdir(object):
 				if f.filename == 'index.txt':
 					indexFound = True
 				else:
-					indextxt += '\n* ' + f.linkto
+					if siteinfo.index_link_local:
+						indextxt += '\n* ' + f.linklocal
+					else:
+						indextxt += '\n* ' + f.linkto
 
 		if not indexFound:
-			index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
-			self.__files.append(index) # so it won't get deleted
-			if index.stale or self.__stale:
-				text = index.textbaked()
-				siteinfo.callAsciidoc(index.destfile, text)
+			if self.has_content:
+				index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
+				self.__files.append(index) # so it won't get deleted
+				if index.stale or self.__stale:
+					text = index.textbaked()
+					siteinfo.callAsciidoc(index.destfile, text)
 
 	def __process_blog(self):
 		blogposts = [f for f in self.__files if f.filetype == awbfile.filetype_process]
@@ -259,27 +260,25 @@ class awbdir(object):
 			num_recent_posts = min(self.config['num recent posts'], len(posts)) 
 			num_recent_magazines = min(self.config['num recent posts'], len(magazines))
 		
+			template_text = self.config['main template'] + self.config['sub template'] + self.config['post template']
+			using_blog_recent = re.search(r'<\?\s*insert\s+blog\s+recent\s*\?>', template_text) != None
+			using_mag_recent = re.search(r'<\?\s*insert\s+magazine\s+recent\s*\?>', template_text) != None
+			using_mag_contents = re.search(r'<\?\s*insert\s+magazine\s+contents\s*\?>', template_text) != None
+			
 			# Generate insertable data for blog pages
 			magcontents = self.__magcontents(blogposts)
+			mag_contents_stale = False
 			extra = {}
 			extra['recent posts'] = ''
 			extra['recent magazines'] = ''
 			extra['magazine contents'] = ''
 			extra['magazine date'] = ''			
 			extra['magazine title'] = ''
-			# only do index and contents and recent lists if:
-			#	* directory is stale OR
-			#	* filenames in list have changed OR
-			#	* contents of files in list has changed (for index only)
-			# If recent post list or recent magazines list changes, have to re-do whole blog
-			# Recent posts list
 			for p in posts[0:num_recent_posts]:
 				extra['recent posts'] += '\n* ' + p.linkto
-			# Recent magazines list
 			for p in magazines[0:num_recent_magazines]:
 				extra['recent magazines'] += '\n* ' + p.linkto
 			currentpost = blogposts[0]
-			# Other info
 			if currentpost.magpost:
 				extra['magazine contents'] = magcontents[currentpost.date]
 				extra['magazine date'] = currentpost.date
@@ -287,6 +286,8 @@ class awbdir(object):
 			else:
 				if magcontents.has_key('News'):
 					extra['magazine contents'] = magcontents['News']
+					if type(siteinfo.readCache(self.__relpath + ' magazine contents')) == dict:
+						mag_contents_stale = extra['magazine contents'] != siteinfo.readCache(self.__relpath + ' magazine contents')['News']
 				else:
 					extra['magazine contents'] = ''
 				extra['magazine date'] = None
@@ -294,18 +295,21 @@ class awbdir(object):
 
 			# Generate index
 			indextxt = ''
+			regen_index = False
 			for p in blogposts[0:num_recent_posts]:
 				indextxt += p.texthalfbaked(extra)
-			# Change to most recent mtime of all blog posts
+				if p.stale:
+					regen_index = True
 			index = awbfile('index.txt', self, indextxt, os.path.getmtime(self.__abspath))
-			self.__files.append(index) # so it won't get deleted
-			if index.stale or self.__stale:
+			self.__files.append(index)
+			if index.stale or self.__stale or regen_index:
 				text = index.textbaked(extra)
 				siteinfo.callAsciidoc(index.destfile, text)
 
 			# Generate contents
 			month = None
 			contentstxt = 'Contents of ' + self.config['name'] + '\n'
+			regen_contents = False
 			for i in range(len(contentstxt)):
 				contentstxt += '='
 			for p in blogposts:
@@ -313,21 +317,30 @@ class awbdir(object):
 					contentstxt += "\n== " + p.date.strftime("%B %Y") + " ==\n\n"
 					month = p.date.month
 				contentstxt += '* ' + p.linkto + "\n"
-			# Change to most recent mtime of all blog posts
+				if p.stale:
+					regen_contents = True
 			contents = awbfile('contents.txt', self, contentstxt, os.path.getmtime(self.__abspath))
-			self.__files.append(contents) # so it won't get deleted
-			if index.stale or self.__stale:
+			self.__files.append(contents)
+			if contents.stale or self.__stale or regen_contents:
 				text = contents.textbaked(extra)
 				siteinfo.callAsciidoc(contents.destfile, text)
+			
+			blog_recent_stale = extra['recent posts'] != siteinfo.readCache(self.__relpath + ' recent posts')
+			mag_recent_stale = extra['recent magazines'] != siteinfo.readCache(self.__relpath + ' recent magazines')
 
 			# Process all blog entries
 			for f in blogposts:
-				if f.stale or self.__stale:
-					print INDENT + "Processing blog file " + f.filename
-					if f.magpost:
-						extra['magazine contents'] = ''
-						extra['magazine contents'] = magcontents[f.date]
-						extra['magazine date'] = f.date
+				print INDENT + "Processing blog file " + f.filename
+				if f.magpost:
+					extra['magazine contents'] = magcontents[f.date]
+					extra['magazine date'] = f.date
+					mag_contents_stale = False
+					if type(siteinfo.readCache(self.__relpath + ' magazine contents')) == dict:
+						mag_contents_stale = extra['magazine contents'] != siteinfo.readCache(self.__relpath + ' magazine contents')[f.date]
+				if f.stale or self.__stale \
+					or (using_blog_recent and blog_recent_stale) \
+					or (using_mag_recent and mag_recent_stale) \
+					or (using_mag_contents and mag_contents_stale):
 					text = f.textbaked(extra)
 					siteinfo.callAsciidoc(f.destfile, text)
 
@@ -339,6 +352,10 @@ class awbdir(object):
 					copyFile(f.srcfile, f.destfile)
 				else:
 					print INDENT + f.filename + " is up to date."
+		# Cache info for staleness checking
+		siteinfo.writeCache(self.__relpath + ' recent posts', extra['recent posts'])
+		siteinfo.writeCache(self.__relpath + ' recent magazines', extra['recent magazines'])
+		siteinfo.writeCache(self.__relpath + ' magazine contents', magcontents)
 
 	def __magcontents(self, blogposts):
 		allcontents = {}
@@ -369,6 +386,7 @@ class awbdir(object):
 			if f.filetype == awbfile.filetype_process and f.galleryroom:
 				print INDENT + "Processing room " + f.filename
 				self.__process_gallery_room(f)
+				self.__files.remove(f)
 	
 		for f in self.__files:
 			if f.filetype == awbfile.filetype_copy:
@@ -414,10 +432,11 @@ class awbdir(object):
 			roomphototxt = re.sub(r'<\?\s*insert\s+photo\s+caption\s*\?>', pic[2], roomphototxt)
 			roomtxt += roomphototxt
 			filename = pic[0] + '.txt'
-			self.__files.append(awbfile(filename, self, phototxt, room_file.mtime))
+			self.__files.append(awbfile(filename, self, phototxt, room_file.mtime, pic[2]))
 		roomtemplate = re.sub(r'<\?\s*insert\s+content\s*\?>', roomtxt, roomtemplate)
 		filename = room_filename_base + '.txt'
-		self.__files.append(awbfile(filename, self, roomtemplate, room_file.mtime))
+		f = awbfile(filename, self, roomtemplate, room_file.mtime, room.intro)
+		self.__files.append(f)
 
 	def delete_extra_files(self):
 		outputfiles = self.get_outputfiles()
@@ -431,7 +450,6 @@ class awbdir(object):
 				rm(abspath)
 
 	def __sitemap(self):
-		# respect robots.txt
 		sitemaptxt = ''
 		if self.__relpath == '': # This is the root of the website
 			sitemaptxt += """<?xml version="1.0" encoding="UTF-8"?>
@@ -481,6 +499,8 @@ class awbdir(object):
 	def __get_path(self):
 		return self.__relpath
 
+	def __get_fsname(self):
+		return self.__fsname
 	def __get_name(self):
 		return self.config['name']
 
@@ -489,8 +509,18 @@ class awbdir(object):
 	
 	def __get_stale(self):
 		return self.__stale
+
+	def __has_content(self):
+		has_content = False
+		for d in self.__subdirs:
+			if d.has_content:
+				has_content = True
+		if not has_content:
+			has_content = len([f for f in self.__files if f.filetype == awbfile.filetype_process]) > 0
+		return has_content
 	
 	path = property(__get_path)
+	fsname = property(__get_fsname)
 	name = property(__get_name)
 	dirtype = property(__get_dirtype)
 	dirtype_normal = 'normal'
@@ -498,9 +528,10 @@ class awbdir(object):
 	dirtype_gallery = 'gallery'
 	sitemap = property(__sitemap)
 	stale = property(__get_stale)
+	has_content = property(__has_content)
 
 class awbfile(object):
-	def __init__(self, filename, directory, text=None, mtime=None):
+	def __init__(self, filename, directory, text=None, mtime=None, description=None):
 		# filename is relative to directory supplied
 		self.__directory = directory
 		self.__filename = filename
@@ -523,7 +554,7 @@ class awbfile(object):
 					self.__init_copy()
 				else:
 					self.__filetype = 'process'
-					self.__init_process()
+					self.__init_process(description)
 			else:
 				self.__filetype = 'copy'
 				self.__init_copy()
@@ -537,28 +568,40 @@ class awbfile(object):
 		else:
 			self.__stale = True
 
-	def __init_title(self):
+	def __init_meta(self, description=None):
+		self.__description = False
 		if self.__generated:
 			self.__title = self.__text.split('\n', 1)[0].strip()
 			match = re.search(r'^[=]+ (.*) [=]+$', self.__title)
 			if match:
 				self.__title = re.sub(r'^[=]+ (.*) [=]+$', match.group(1), self.__title)
+			if description:
+				self.__description = description
 		else:
 			try:
 				fh = open(self.__srcfile, 'r')
 				self.__title = fh.readline().strip()
+				if description:
+					self.__description = description
+				else:
+					fh.readline(); fh.readline() #Skip next 2 lines
+					desc_line = fh.readline().strip()
+					if desc_line[0:2] == '//':
+						self.__description = desc_line[2:].strip()
 			except Exception, e:
 				print "awb: non-fatal: Error reading the title from " + self.__srcfile + ".  " + str(e)
 				self.__title = ''
+			finally:
+				fh.close()
 
 	def __init_copy(self):
 		self.__destfile = os.path.join(siteinfo.destdir, self.__directory.path, self.__filename)
 		self.__init_mtimes()
 
-	def __init_process(self):
+	def __init_process(self, description=None):
 		self.__destfile = os.path.join(siteinfo.destdir, self.__directory.path, os.path.splitext(self.__filename)[0] + '.html')
 		self.__init_mtimes()
-		self.__init_title()
+		self.__init_meta(description)
 		if self.__directory.dirtype == awbdir.dirtype_normal:
 			self.__date = datetime.datetime.fromtimestamp(self.__mtime_src)
 		elif self.__directory.dirtype == awbdir.dirtype_gallery:
@@ -623,6 +666,8 @@ class awbfile(object):
 			template = self.__directory.config['post template']
 		# process all commands
 		template = re.sub(r'<\?\s*insert\s+title\s*\?>', self.title, template)
+		template = re.sub(r'<\?\s*insert\s+meta\s+description\s+html\s*\?>', self.meta_description_html, template)
+		template = re.sub(r'<\?\s*insert\s+meta\s+description\s+xhtml\s*\?>', self.meta_description_xhtml, template)
 		template = re.sub(r'<\?\s*insert\s+content\s*\?>', self.textraw + '\n', template)
 		breadcrumbs = self.__directory.config['breadcrumbs']
 		if self.filename != 'index.txt':
@@ -680,12 +725,27 @@ class awbfile(object):
 	def __get_title(self):
 		return self.__title
 
+	def __get_description_html(self):
+		if self.__description:
+			return '<meta name="description" content="' + self.__description.replace('"', "'") + '">'
+		else:
+			return '';
+
+	def __get_description_xhtml(self):
+		if self.__description:
+			return '<meta name="description" content="' + self.__description.replace('"', "'") + '" />'
+		else:
+			return '';
+
 	def __href(self):
 		href = self.__destfile.replace(siteinfo.destdir, '').replace(os.path.sep, '/')
 		return href
 
 	def __linkto(self):
 		return 'link:' + self.href + '[' + self.__title + ']'
+
+	def __linklocal(self):
+		return 'link:' + os.path.split(self.href)[1] + '[' + self.__title + ']'
 
 	def __get_lastmod(self):
 		lastmod = datetime.datetime.fromtimestamp(self.__mtime_src)
@@ -705,9 +765,12 @@ class awbfile(object):
 	galleryroom = property(__get_galleryroom)
 	date = property(__get_date)
 	title = property(__get_title)
+	meta_description_html = property(__get_description_html)
+	meta_description_xhtml = property(__get_description_xhtml)
 	textraw = property(__get_text_raw)
 	href = property(__href)
 	linkto = property(__linkto)
+	linklocal = property(__linklocal)
 	lastmod = property(__get_lastmod)
 
 class awbdirconfig(object):
@@ -907,7 +970,6 @@ def getQuick(self, section, option, default=''):
 	try:
 		value = self.get(section, option).strip()
 	except Exception, e:
-		#print "awb: non-fatal: Getting option " + option + " from [" + section + "]  failed.  " + str(e)
 		return default
 	return value
 
@@ -915,7 +977,6 @@ def getQuickInt(self, section, option, default=0):
 	try:
 		value = self.getint(section, option)
 	except Exception, e:
-		#print "awb: non-fatal: Getting option " + option + " from [" + section + "] failed.  " + str(e)
 		return default
 	return value
 
@@ -926,7 +987,6 @@ def optionsQuick(self, section, optiondict):
 		for option in options:
 			newoptions[option] = self.get(section, option).strip()
 	except Exception, e:
-		#print "awb: non-fatal: Getting options from [" + section + "] failed.  " + str(e)
 		pass
 	return newoptions
 
