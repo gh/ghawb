@@ -35,6 +35,50 @@ TEMPLATE_FILE = 'template.conf'
 BUILD_ALL = False
 INDENT = ''
 
+class table:
+    """Table for pretty-printing list output"""
+    def __init__(self,n):
+        if n > 0 and n < 10:
+            self._colnum=n
+            self._rows=[]
+        else:
+            print "Table length must be in 1,9"
+            sys.exit(0)
+    def _add(self,r,is_data):
+        if len(r) != self._colnum:
+            while len(r) > self._colnum:
+                r.pop
+            while len(r) < self._colnum:        
+                if is_data:
+                    r.append('UNDEF')
+                else:
+                    r.append('NONAME')
+        if is_data:
+            self._rows.append(r)
+        else:
+            self._rows.insert(0,r)
+    def title(self,r):
+        self._add(r,False)
+    def add(self,r):
+        self._add(r,True)
+    def display(self):
+        n = len(self._rows)
+        n = 0
+        max = []
+        while n < self._colnum:
+            max.append(0)
+            for r in self._rows:
+                if len(r[n]) > max[n]:
+                    max[n]=len(r[n])
+            n=n+1
+        for r in self._rows:
+            line=''
+            n = 0
+            while n < self._colnum:
+                line = line + r[n].ljust(max[n]+2)
+                n=n+1
+            print line
+
 class awbsiteinfo(object):
     def __init__(self, sitename):
         # Read the user's websites def. file (~/.awb/sites.conf)
@@ -48,12 +92,24 @@ class awbsiteinfo(object):
             self.__tidy_html = config.getQuick(sitename, 'tidy', 'false').strip().lower() == 'true'
             self.__index_link_local = config.getQuick(sitename, 'index link local', 'false').strip().lower() == 'true'
         elif sitename == 'ALL':
+            t = table(4)
+            t.title(['----','-----------','---------','--------'])
+            t.title(['Name','Description','Site Root','Base Url'])
             for s in config.sections():
                 try:
                     d = config.get(s,'description')
                 except:
-                    d = 'No Description'
-                print s,"\t",d
+                    d = 'No Desc'
+                try:
+                    r = config.get(s,'siteroot')
+                except:
+                    r = 'No Root'
+                try:
+                    u = config.get(s,'baseurl')
+                except:
+                    r = 'No Root'
+                t.add([s,d,r,u])
+            t.display()
             sys.exit()
         else:
             print "Site not found."
